@@ -1,5 +1,16 @@
 #+title: Emacs Config
 
+* Package Management
+
+** Use Package
+
+Enable =use-package= support for Elpaca
+
+#+begin_src emacs-lisp
+(elpaca elpaca-use-package
+  (elpaca-use-package-mode))
+#+end_src
+
 * Startup Time
 
 #+begin_src emacs-lisp

@@ -92,6 +92,8 @@ Do not allow the cursor in the minibuffer prompt.
 #+begin_src emacs-lisp
   (use-package evil
     :init
+    (setq evil-want-keybinding nil)
+    :config
     (evil-mode 1))
 #+end_src
 
@@ -103,7 +105,7 @@ Do not allow the cursor in the minibuffer prompt.
     :hook (org-mode . evil-org-mode))
 #+end_src
 
-** DISABLED Evil Escape
+** Evil Escape
 
 #+begin_src emacs-lisp
   (use-package evil-escape
@@ -113,6 +115,15 @@ Do not allow the cursor in the minibuffer prompt.
     (setq evil-escape-key-sequence "jk"
           evil-escape-delay 0.2)
     (evil-define-key* '(insert replace visual operator) 'global "\C-g" #'evil-escape))
+#+end_src
+
+** Evil Collection
+
+#+begin_src emacs-lisp
+  (use-package evil-collection
+    :after evil
+    :config
+    (evil-collection-init))
 #+end_src
 
 * User Interface

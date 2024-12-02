@@ -157,6 +157,18 @@ Do not allow the cursor in the minibuffer prompt.
   (vertico-mode))
 #+end_src
 
+** Completion In Region (Corfu)
+
+#+begin_src emacs-lisp
+  (use-package corfu
+    :init
+    (global-corfu-mode))
+
+  (use-feature emacs
+    :custom
+    (tab-always-indent 'complete))
+#+end_src
+     
 ** Consult
 
 #+begin_src emacs-lisp

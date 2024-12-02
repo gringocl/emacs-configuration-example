@@ -103,7 +103,7 @@ Do not allow the cursor in the minibuffer prompt.
     :hook (org-mode . evil-org-mode))
 #+end_src
 
-** Evil Escape
+** DISABLED Evil Escape
 
 #+begin_src emacs-lisp
   (use-package evil-escape
@@ -189,6 +189,108 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
         completion-category-overrides '((file (styles partial-completion)))))
 #+end_src
 
+** Minibuffer Annotations (Marginalia)
+
+#+begin_src emacs-lisp
+(use-package marginalia
+  ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
+  ;; available in the *Completions* buffer, add it to the
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  :init
+  (marginalia-mode))
+#+end_src
+
+** DISABLED Miniframe
+
+#+begin_src emacs-lisp
+  (use-package mini-frame
+    :config
+    (custom-set-variables
+     '(mini-frame-show-parameters
+       '((top . 1.0)
+         (width . 1.0)
+         (left . 0.5)
+         (height . 5)
+         (left-fringe . 12)
+         (right-fringe . 12)
+         ;(top-fringe . 12)
+         ;(bottom-fringe .12)
+         (child-frame-border-width . 1)
+         (internal-border-width . 1)))
+     '(mini-frame-color-shift-step 7))
+    (setq mini-frame-internal-border-color "black")
+    :init
+    (mini-frame-mode))
+#+end_src
+
+** Minibuffer Actions Rooted in Keybindings (Embark)
+
+#+begin_src emacs-lisp
+  (use-package embark
+    :bind
+    (("C-." . embark-act)         ;; pick some comfortable binding
+     ("C-;" . embark-dwim)        ;; good alternative: M-.
+     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+    :init
+    ;; Optionally replace the key help with a completing-read interface
+    (setq prefix-help-command #'embark-prefix-help-command))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package embark-consult
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+#+end_src
+
+* Projects
+
+** Tree View (Treemacs)
+
+#+begin_src emacs-lisp
+(use-package treemacs
+  :bind ("s-b" . #'treemacs)
+  :config
+  (treemacs-follow-mode))
+#+end_src
+
+* File Types
+
+** Defaults
+
+*** Indentation
+
+Two space indentation by default.
+
+#+begin_src emacs-lisp
+  (setq-default indent-tabs-mode nil
+                tab-width 2
+                smie-indent-basic 2)
+#+end_src
+
+** Shell
+
+#+begin_src emacs-lisp
+(use-feature shell
+  :config
+  (setq sh-basic-offset 2))
+#+end_src
+
+** Markdown
+
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :config
+
+  (add-hook 'markdown-mode-hook #'visual-line-mode)
+  (add-hook 'markdown-mode-hook #'visual-wrap-prefix-mode)
+
+  (setq markdown-list-indent-width 2))
+#+end_src
+
 * Version Control
 
 ** Magit
@@ -203,6 +305,167 @@ Install latest version of transient, as the version included in Emacs is not rec
 (use-package transient)
 #+end_src
 
+* Assistance
+
+** Which Key
+
+#+begin_src emacs-lisp
+(use-feature which-key
+  :init
+  (which-key-mode))
+#+end_src
+
+** Helpful
+
+#+begin_src emacs-lisp
+(use-package helpful
+  :bind (
+         ;; Remap standard commands
+         ([remap describe-function] . #'helpful-callable)
+         ([remap describe-command] . #'helpful-command)
+         ([remap describe-variable] . #'helpful-variable)
+         ([remap describe-symbol] . #'helpful-symbol)
+         ([remap describe-key] . #'helpful-key)))
+#+end_src
+
+* LLM Chat
+
+** gptel
+
+#+begin_src emacs-lisp
+  (use-package gptel
+    :config
+    
+    (defun ms/load-anthropic-key ()
+      (gptel-api-key-from-auth-source "api.anthropic.com"))
+    
+    (gptel-make-anthropic "Claude"          
+      :stream t                             
+      :key #'ms/load-anthropic-key
+      :models '(claude-3-5-sonnet-20241022))
+
+    (setq
+     gptel-model "mistral-nemo:12b"
+     gptel-backend (gptel-make-ollama "Ollama" 
+                     :host "ollama.diffusenebula.org"        
+                     :stream t
+                     :models '(mistral-nemo:12b
+                               mistral-nemo:12b-instruct-2407-q6_K))))
+#+end_src
+
+
+#+begin_src emacs-lisp
+  (use-package whisper
+  :ensure (:host github :repo "natrys/whisper.el" :protocol ssh :wait t)
+  :bind ("C-H-r" . whisper-run)
+  :config
+  (setq whisper-install-directory "/tmp/"
+        whisper-model "base"
+        whisper-language "en"
+        whisper-translate nil
+        whisper-use-threads (/ (num-processors) 2)))
+
+  
+(defun rk/get-ffmpeg-device ()
+  "Gets the list of devices available to ffmpeg.
+The output of the ffmpeg command is pretty messy, e.g.
+  [AVFoundation indev @ 0x7f867f004580] AVFoundation video devices:
+  [AVFoundation indev @ 0x7f867f004580] [0] FaceTime HD Camera (Built-in)
+  [AVFoundation indev @ 0x7f867f004580] AVFoundation audio devices:
+  [AVFoundation indev @ 0x7f867f004580] [0] Cam Link 4K
+  [AVFoundation indev @ 0x7f867f004580] [1] MacBook Pro Microphone
+so we need to parse it to get the list of devices.
+The return value contains two lists, one for video devices and one for audio devices.
+Each list contains a list of cons cells, where the car is the device number and the cdr is the device name."
+  (unless (string-equal system-type "darwin")
+    (error "This function is currently only supported on macOS"))
+
+  (let ((lines (string-split (shell-command-to-string "ffmpeg -list_devices true -f avfoundation -i dummy || true") "\n")))
+    (cl-loop with at-video-devices = nil
+             with at-audio-devices = nil
+             with video-devices = nil
+             with audio-devices = nil
+             for line in lines
+             when (string-match "AVFoundation video devices:" line)
+             do (setq at-video-devices t
+                      at-audio-devices nil)
+             when (string-match "AVFoundation audio devices:" line)
+             do (setq at-audio-devices t
+                      at-video-devices nil)
+             when (and at-video-devices
+                       (string-match "\\[\\([0-9]+\\)\\] \\(.+\\)" line))
+             do (push (cons (string-to-number (match-string 1 line)) (match-string 2 line)) video-devices)
+             when (and at-audio-devices
+                       (string-match "\\[\\([0-9]+\\)\\] \\(.+\\)" line))
+             do (push (cons (string-to-number (match-string 1 line)) (match-string 2 line)) audio-devices)
+             finally return (list (nreverse video-devices) (nreverse audio-devices)))))
+
+(defun rk/find-device-matching (string type)
+  "Get the devices from `rk/get-ffmpeg-device' and look for a device
+matching `STRING'. `TYPE' can be :video or :audio."
+  (let* ((devices (rk/get-ffmpeg-device))
+         (device-list (if (eq type :video)
+                          (car devices)
+                        (cadr devices))))
+    (cl-loop for device in device-list
+             when (string-match-p string (cdr device))
+             return (car device))))
+
+(defcustom rk/default-audio-device nil
+  "The default audio device to use for whisper.el and outher audio processes."
+  :type 'string)
+
+(defun rk/select-default-audio-device (&optional device-name)
+  "Interactively select an audio device to use for whisper.el and other audio processes.
+If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
+  (interactive)
+  (let* ((audio-devices (cadr (rk/get-ffmpeg-device)))
+         (indexes (mapcar #'car audio-devices))
+         (names (mapcar #'cdr audio-devices))
+         (name (or device-name (completing-read "Select audio device: " names nil t))))
+    (setq rk/default-audio-device (rk/find-device-matching name :audio))
+    (when (boundp 'whisper--ffmpeg-input-device)
+      (setq whisper--ffmpeg-input-device (format ":%s" rk/default-audio-device)))))
+
+#+end_src
+
+* Undo
+
+** Undo Fu Session
+
+#+begin_src emacs-lisp
+(use-package undo-fu-session
+  :config
+  (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
+  :init
+  (undo-fu-session-global-mode))
+#+end_src
+
+* Major Modes
+
+** Org
+
+#+begin_src emacs-lisp
+(add-hook 'org-mode-hook #'display-line-numbers-mode)
+#+end_src
+
+* Minor Modes
+
+** Parens
+
+#+begin_src emacs-lisp
+  (use-package smartparens
+    :init (smartparens-global-mode))
+#+end_src
+
+
+** Line Numbers
+
+#+begin_src emacs-lisp
+  (setq display-line-numbers-type 't)  ; Options: 'relative, 't (absolute), 'visual  
+  (setq display-line-numbers-width 3)         ; Adjust width of line number display
+  (setq display-line-numbers-grow-only t)     ; Prevent width from shrinking
+#+end_src
 
 * Startup Time
 

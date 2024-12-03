@@ -318,6 +318,13 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 * Text Editing
 
+** Delete Trailing Whitespace
+
+#+begin_src emacs-lisp
+  (use-package ws-butler
+    :init (ws-butler-global-mode))
+#+end_src
+
 ** Spell Checking (Flyspell)
 
 #+begin_src emacs-lisp

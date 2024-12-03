@@ -216,18 +216,72 @@ generate the filenames. This is taken from Doom Emacs.
   (vertico-mode))
 #+end_src
 
-** Completion In Region (Corfu)
+** Completion At Point
+
+*** Completion-at-Point Function Configuration
+
+Add =:capf= and =:compdef= to =use-package=.
 
 #+begin_src emacs-lisp
-  (use-package corfu
-    :init
-    (global-corfu-mode))
-
-  (use-feature emacs
-    :custom
-    (tab-always-indent 'complete))
+(use-package compdef
+  :ensure (:wait t))
 #+end_src
-     
+
+*** Inline Completion
+
+#+begin_src emacs-lisp
+(use-package corfu
+  :bind
+  (:map corfu-map
+        ("TAB" . corfu-next)
+        ([tab] . corfu-next)
+        ("S-TAB" . corfu-previous)
+        ([backtab] . corfu-previous)
+        ("C-n" . nil)
+        ("C-p" . nil)
+        ([remap next-line] . nil)
+        ([remap previous-line] . nil)
+        ([remap move-end-of-line] . nil)
+        ([remap move-beginning-of-line] . nil)
+        ("\r" . nil)
+        ("<escape>" . corfu-quit))
+  :init
+  ;; Tab will trigger completion if it does not need to indent
+  (setq tab-always-indent 'complete)
+  ;; Disable text-mode ispell completion at point function
+  (setq text-mode-ispell-word-completion nil)
+  ;; TAB-and-Go customizations
+  (setq
+   ;; Enable cycling for `corfu-next/previous'
+   corfu-cycle t
+   corfu-preselect 'prompt)
+  ;; Auto completion
+  (setq
+   corfu-auto t
+   corfu-auto-prefix 2
+   corfu-auto-delay 0.1)
+  :config
+  (corfu-history-mode))
+#+end_src
+
+*** Additional Completion-at-Point Functions (cape)
+
+#+begin_src emacs-lisp
+(use-package cape
+  :config
+  (setq cape-dabbrev-check-other-buffers nil))
+#+end_src
+
+*** Ripgrep Completion-at-Point Function
+
+#+begin_src emacs-lisp
+(use-package ripgrep-capf
+  :after cape
+  :ensure (:host github :repo "aaronjensen/ripgrep-capf" :protocol ssh)
+  :init
+  (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
+#+end_src
+
 ** Consult
 
 #+begin_src emacs-lisp

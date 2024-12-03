@@ -174,6 +174,46 @@ generate the filenames. This is taken from Doom Emacs.
     (evil-collection-init))
 #+end_src
 
+* Leader Key
+
+#+begin_src emacs-lisp
+  (use-package leader-key
+  :ensure (leader-key :host github :repo "aaronjensen/emacs-leader-key" :protocol ssh :wait t)
+  :demand t
+  :config
+  (leader-key-init)
+
+  (leader-key-declare-prefix "a" "apps" "Applications")
+  (leader-key-declare-prefix "b" "buffers" "Buffers")
+  (leader-key-declare-prefix "e p" "profiler" "Profiler")
+  (leader-key-declare-prefix "e" "emacs" "Emacs")
+  (leader-key-declare-prefix "f" "files" "Files")
+  (leader-key-declare-prefix "g" "git" "Git")
+  (leader-key-declare-prefix "h" "help" "Help")
+  (leader-key-declare-prefix "j" "journal" "Journal")
+  (leader-key-declare-prefix "l" "layouts" "Layouts")
+  (leader-key-declare-prefix "m" "major" "Major Mode")
+  (leader-key-declare-prefix "n" "notes" "Notes")
+  (leader-key-declare-prefix "o" "org" "Org Mode")
+  (leader-key-declare-prefix "p" "projects" "Projects")
+  (leader-key-declare-prefix "q" "quit" "Quit Emacs")
+  (leader-key-declare-prefix "r" "error" "Error")
+  (leader-key-declare-prefix "S" "flyspell" "Flyspell")
+  (leader-key-declare-prefix "s" "search" "Search")
+  (leader-key-declare-prefix "T" "toggle" "Toggle")
+  (leader-key-declare-prefix "u" "C-u" "Universal Argument")
+  (leader-key-declare-prefix "w" "windows" "Windows")
+
+  (leader-key-set
+   "h v" #'describe-variable
+   "h f" #'describe-function
+   "g g" #'magit-status
+   "f f" #'find-file
+   "x" #'execute-extended-command
+   "e l" #'find-library
+   "T w" #'visual-line-mode))
+#+end_src
+
 * User Interface
 
 ** Font Size

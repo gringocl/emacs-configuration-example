@@ -307,9 +307,11 @@ Add =:capf= and =:compdef= to =use-package=.
 *** Additional Completion-at-Point Functions (cape)
 
 #+begin_src emacs-lisp
-(use-package cape
-  :config
-  (setq cape-dabbrev-check-other-buffers nil))
+  (use-package cape
+    :init
+    (add-hook 'completion-at-point-functions #'cape-elisp-block)
+    :config
+    (setq cape-dabbrev-check-other-buffers nil))
 #+end_src
 
 *** Ripgrep Completion-at-Point Function

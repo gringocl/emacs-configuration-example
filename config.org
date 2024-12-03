@@ -320,6 +320,7 @@ Start git commit in insert mode
 
 #+begin_src emacs-lisp
   (use-package git-commit
+    :after magit
     :config
     (add-hook 'git-commit-setup-hook
               (defun +vc-start-in-insert-state-maybe-h ()
@@ -355,7 +356,7 @@ Start git commit in insert mode
 
 * LLM Chat
 
-** gptel
+** DISABLED gptel
 
 #+begin_src emacs-lisp
   (use-package gptel

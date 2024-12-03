@@ -2,7 +2,6 @@
 #+startup: overview
 #+TODO: DISABLED
 
-
 * Package Management
 
 ** Use Package
@@ -90,11 +89,12 @@ Do not allow the cursor in the minibuffer prompt.
 ** Evil 
 
 #+begin_src emacs-lisp
-  (use-package evil
-    :init
-    (setq evil-want-keybinding nil)
-    :config
-    (evil-mode 1))
+    (use-package evil
+      :init
+      (setq evil-want-keybinding nil)
+      :config
+      (evil-mode 1)
+      (setq evil-disable-insert-state-bindings t))
 #+end_src
 
 ** Evil Org

@@ -134,7 +134,7 @@ generate the filenames. This is taken from Doom Emacs.
 
 * Evil
 
-** Evil 
+** Evil
 
 #+begin_src emacs-lisp
     (use-package evil
@@ -179,27 +179,27 @@ generate the filenames. This is taken from Doom Emacs.
 ** Font Size
 
 #+begin_src emacs-lisp
-(use-feature emacs
-  :bind (("s-=" . #'global-text-scale-adjust)
-         ("s--" . #'global-text-scale-adjust)
-         ("s-0" . #'global-text-scale-adjust)
-         ("C-=" . #'text-scale-adjust)
-         ("C--" . #'text-scale-adjust)
-         ("C-0" . #'text-scale-adjust))
+  (use-feature emacs
+    :bind (("s-=" . #'global-text-scale-adjust)
+           ("s--" . #'global-text-scale-adjust)
+           ("s-0" . #'global-text-scale-adjust)
+           ("C-=" . #'text-scale-adjust)
+           ("C--" . #'text-scale-adjust)
+           ("C-0" . #'text-scale-adjust))
 
-  :preface
-  (defvar presentation-mode-font-size 21)
-  (defun presentation-mode ()
-    "Increase the font size for presentation."
-    (interactive)
-    (let* ((current-font-size (/ (face-attribute 'default :height) 10))
-           (new-font-size
-            (if (not (eq current-font-size presentation-mode-font-size))
-                presentation-mode-font-size
-              c/monospace-font-size)))
-      (set-face-attribute 'default nil :height (* new-font-size 10))
-      (set-face-attribute 'variable-pitch nil :height (* new-font-size 10))
-      (redisplay 'force))))
+    :preface
+    (defvar presentation-mode-font-size 21)
+    (defun presentation-mode ()
+      "Increase the font size for presentation."
+      (interactive)
+      (let* ((current-font-size (/ (face-attribute 'default :height) 10))
+             (new-font-size
+              (if (not (eq current-font-size presentation-mode-font-size))
+                  presentation-mode-font-size
+                c/monospace-font-size)))
+        (set-face-attribute 'default nil :height (* new-font-size 10))
+        (set-face-attribute 'variable-pitch nil :height (* new-font-size 10))
+        (redisplay 'force))))
 #+end_src
 
 ** Full Screen
@@ -441,19 +441,19 @@ Start git commit in insert mode
 #+begin_src emacs-lisp
   (use-package gptel
     :config
-    
+
     (defun ms/load-anthropic-key ()
       (gptel-api-key-from-auth-source "api.anthropic.com"))
-    
-    (gptel-make-anthropic "Claude"          
-      :stream t                             
+
+    (gptel-make-anthropic "Claude"
+      :stream t
       :key #'ms/load-anthropic-key
       :models '(claude-3-5-sonnet-20241022))
 
     (setq
      gptel-model "mistral-nemo:12b"
-     gptel-backend (gptel-make-ollama "Ollama" 
-                     :host "ollama.diffusenebula.org"        
+     gptel-backend (gptel-make-ollama "Ollama"
+                     :host "ollama.diffusenebula.org"
                      :stream t
                      :models '(mistral-nemo:12b
                                mistral-nemo:12b-instruct-2407-q6_K))))
@@ -471,7 +471,7 @@ Start git commit in insert mode
         whisper-translate nil
         whisper-use-threads (/ (num-processors) 2)))
 
-  
+
 (defun rk/get-ffmpeg-device ()
   "Gets the list of devices available to ffmpeg.
 The output of the ffmpeg command is pretty messy, e.g.
@@ -564,11 +564,10 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
     :init (smartparens-global-mode))
 #+end_src
 
-
 ** Line Numbers
 
 #+begin_src emacs-lisp
-  (setq display-line-numbers-type 't)  ; Options: 'relative, 't (absolute), 'visual  
+  (setq display-line-numbers-type 't)  ; Options: 'relative, 't (absolute), 'visual
   (setq display-line-numbers-width 3)         ; Adjust width of line number display
   (setq display-line-numbers-grow-only t)     ; Prevent width from shrinking
 #+end_src
@@ -581,4 +580,3 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
             (let ((inhibit-message t))
               (message "Emacs init time: %s" (emacs-init-time)))))
 #+end_src
-

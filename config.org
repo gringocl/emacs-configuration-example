@@ -2,6 +2,56 @@
 #+startup: overview
 #+TODO: DISABLED
 
+* Leader Key
+
+#+begin_src emacs-lisp
+(use-package leader-key
+  :ensure (leader-key :host github :repo "aaronjensen/emacs-leader-key" :protocol ssh :wait t)
+  :demand t
+  :config
+  (leader-key-init)
+
+  (leader-key-declare-prefix "a" "apps" "Applications")
+  (leader-key-declare-prefix "b" "buffers" "Buffers")
+  (leader-key-declare-prefix "e p" "profiler" "Profiler")
+  (leader-key-declare-prefix "e" "emacs" "Emacs")
+  (leader-key-declare-prefix "f" "files" "Files")
+  (leader-key-declare-prefix "g" "git" "Git")
+  (leader-key-declare-prefix "h" "help" "Help")
+  (leader-key-declare-prefix "j" "journal" "Journal")
+  (leader-key-declare-prefix "l" "layouts" "Layouts")
+  (leader-key-declare-prefix "m" "major" "Major Mode")
+  (leader-key-declare-prefix "n" "notes" "Notes")
+  (leader-key-declare-prefix "o" "org" "Org Mode")
+  (leader-key-declare-prefix "p" "projects" "Projects")
+  (leader-key-declare-prefix "q" "quit" "Quit Emacs")
+  (leader-key-declare-prefix "r" "error" "Error")
+  (leader-key-declare-prefix "S" "flyspell" "Flyspell")
+  (leader-key-declare-prefix "s" "search" "Search")
+  (leader-key-declare-prefix "T" "toggle" "Toggle")
+  (leader-key-declare-prefix "u" "C-u" "Universal Argument")
+  (leader-key-declare-prefix "w" "windows" "Windows")
+
+  (leader-key-set
+   "b b" #'consult-buffer
+   "h v" #'describe-variable
+   "h f" #'describe-function
+   "g g" #'magit-status
+   "f f" #'find-file
+   "x" #'execute-extended-command
+   "e l" #'find-library
+   "T w" #'visual-line-mode))
+#+end_src
+
+  Completion-at-Point Function Configuration
+
+Add =:capf= and =:compdef= to =use-package=.
+
+#+begin_src emacs-lisp
+(use-package compdef
+  :ensure (:wait t))
+#+end_src
+
 * Package Management
 
 ** Use Package
@@ -28,10 +78,10 @@ Macro to use to configure built-in features, rather than packages that do not ne
 ** General
 
 #+begin_src emacs-lisp
-;; (setq initial-buffer-choice
-;;     (lambda () (get-buffer "*Messages*")))
-(setq initial-buffer-choice "~/code/personal/emacs-configuration-example/config.org")
-(setq create-lock-files nil)
+  (setq initial-buffer-choice
+    (lambda () (get-buffer "*Messages*")))
+;:(setq initial-buffer-choice "~/code/personal/emacs-configuration-example/config.org")
+  (setq create-lock-files nil)
 #+end_src
 
 ** Pin Entry
@@ -174,46 +224,6 @@ generate the filenames. This is taken from Doom Emacs.
   (evil-collection-init))
 #+end_src
 
-* Leader Key
-
-#+begin_src emacs-lisp
-(use-package leader-key
-  :ensure (leader-key :host github :repo "aaronjensen/emacs-leader-key" :protocol ssh :wait t)
-  :demand t
-  :config
-  (leader-key-init)
-
-  (leader-key-declare-prefix "a" "apps" "Applications")
-  (leader-key-declare-prefix "b" "buffers" "Buffers")
-  (leader-key-declare-prefix "e p" "profiler" "Profiler")
-  (leader-key-declare-prefix "e" "emacs" "Emacs")
-  (leader-key-declare-prefix "f" "files" "Files")
-  (leader-key-declare-prefix "g" "git" "Git")
-  (leader-key-declare-prefix "h" "help" "Help")
-  (leader-key-declare-prefix "j" "journal" "Journal")
-  (leader-key-declare-prefix "l" "layouts" "Layouts")
-  (leader-key-declare-prefix "m" "major" "Major Mode")
-  (leader-key-declare-prefix "n" "notes" "Notes")
-  (leader-key-declare-prefix "o" "org" "Org Mode")
-  (leader-key-declare-prefix "p" "projects" "Projects")
-  (leader-key-declare-prefix "q" "quit" "Quit Emacs")
-  (leader-key-declare-prefix "r" "error" "Error")
-  (leader-key-declare-prefix "S" "flyspell" "Flyspell")
-  (leader-key-declare-prefix "s" "search" "Search")
-  (leader-key-declare-prefix "T" "toggle" "Toggle")
-  (leader-key-declare-prefix "u" "C-u" "Universal Argument")
-  (leader-key-declare-prefix "w" "windows" "Windows")
-
-  (leader-key-set
-   "h v" #'describe-variable
-   "h f" #'describe-function
-   "g g" #'magit-status
-   "f f" #'find-file
-   "x" #'execute-extended-command
-   "e l" #'find-library
-   "T w" #'visual-line-mode))
-#+end_src
-
 * User Interface
 
 ** Font Size
@@ -258,13 +268,24 @@ generate the filenames. This is taken from Doom Emacs.
 
 ** Completion At Point
 
-*** Completion-at-Point Function Configuration
-
-Add =:capf= and =:compdef= to =use-package=.
+*** Ripgrep Completion-at-Point Function
 
 #+begin_src emacs-lisp
-(use-package compdef
-  :ensure (:wait t))
+(use-package ripgrep-capf
+  :after cape
+  :ensure (:host github :repo "aaronjensen/ripgrep-capf" :protocol ssh)
+  :init
+  (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
+#+end_src
+
+*** Additional Completion-at-Point Functions (cape)
+
+#+begin_src emacs-lisp
+(use-package cape
+  :init
+  (add-hook 'completion-at-point-functions #'cape-elisp-block)
+  :config
+  (setq cape-dabbrev-check-other-buffers nil))
 #+end_src
 
 *** Inline Completion
@@ -302,26 +323,6 @@ Add =:capf= and =:compdef= to =use-package=.
    corfu-auto-delay 0.1)
   :config
   (corfu-history-mode))
-#+end_src
-
-*** Additional Completion-at-Point Functions (cape)
-
-#+begin_src emacs-lisp
-(use-package cape
-  :init
-  (add-hook 'completion-at-point-functions #'cape-elisp-block)
-  :config
-  (setq cape-dabbrev-check-other-buffers nil))
-#+end_src
-
-*** Ripgrep Completion-at-Point Function
-
-#+begin_src emacs-lisp
-(use-package ripgrep-capf
-  :after cape
-  :ensure (:host github :repo "aaronjensen/ripgrep-capf" :protocol ssh)
-  :init
-  (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
 #+end_src
 
 ** Consult
@@ -451,6 +452,38 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
   (treemacs-follow-mode))
 #+end_src
 
+** Workspaces (Tabspaces)
+
+#+begin_src emacs-lisp
+(use-package tabspaces
+  :after consult
+
+  :init
+  (setq tabspaces-session-file (no-littering-expand-var-file-name "tabsession.el")
+        tabspaces-project-switch-commands #'project-find-file)
+
+  (tabspaces-mode)
+
+  :config
+  (consult-customize consult--source-buffer :hidden t :default nil)
+
+  ;; set consult-workspace buffer list
+  (defvar consult--source-workspace
+    (list :name "Workspace Buffers"
+          :narrow ?w
+          :history 'buffer-name-history
+          :category 'buffer
+          :state #'consult--buffer-state
+          :default t
+          :items (lambda () (consult--buffer-query
+                             :predicate #'tabspaces--local-buffer-p
+                             :sort 'visibility
+                             :as #'buffer-name)))
+
+    "Set workspace buffer list for consult-buffer.")
+  (add-to-list 'consult-buffer-sources 'consult--source-workspace))
+#+end_src
+
 * File Types
 
 ** Defaults
@@ -558,7 +591,6 @@ Start git commit in insert mode
 #+begin_src emacs-lisp
 (use-package gptel
   :config
-
   (defun ms/load-anthropic-key ()
     (gptel-api-key-from-auth-source "api.anthropic.com"))
 
@@ -669,8 +701,10 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 ** Org
 
 #+begin_src emacs-lisp
-(setq org-edit-src-content-indentation 0)
-(add-hook 'org-mode-hook #'display-line-numbers-mode)
+(use-feature org-mode
+  :hook (org-mode . corfu-mode)
+  :config
+  (setq org-edit-src-content-indentation 0))
 #+end_src
 
 * Minor Modes
@@ -679,7 +713,7 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 
 #+begin_src emacs-lisp
 (use-package smartparens
-  :init (smartparens-global-mode))
+  :config (smartparens-global-mode))
 #+end_src
 
 ** Line Numbers
@@ -701,6 +735,13 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
         ;; Defaults to 0.1. Decreasing this greatly impacts performance of
         ;; rendering large batches of text.
         vterm-timer-delay 0.06))
+#+end_src
+
+*** Toggle
+
+#+begin_src emacs-lisp
+(use-package vterm-toggle
+  :bind (("s-i" . vterm-toggle)))
 #+end_src
 
 * Startup Time

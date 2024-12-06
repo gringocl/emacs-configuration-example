@@ -1,7 +1,32 @@
 ;;; early-init.el -*- lexical-binding: t; -*-
+(defvar c/early-init-el-start-time (current-time) "Time when early-init.el was started")
+(defvar c/section-split-time c/early-init-el-start-time)
+
+(defun c/get-section-split-time ()
+  "Return the time since the init or since the last time this was called."
+  (let ((now (current-time)))
+    (prog1
+        (float-time (time-subtract now c/section-split-time))
+      (setq c/section-split-time now))))
+
+(defvar c/previous-section nil)
+
+(defun c/start-section (file heading)
+  "Print the split time for the previous heading."
+  (when (and c/previous-section
+             (not noninteractive))
+    (let ((inhibit-message t)
+          (time (* 1000 (c/get-section-split-time))))
+      (when (> time 3)
+        (message "%6s • %4dms • %s" (car c/previous-section) time (cdr c/previous-section)))))
+  (setq c/previous-section (and file heading (cons file heading))))
+
+(c/start-section "early" "Start")
 
 ;; Disable the built-in package manager because Elpaca is used instead
 (setq package-enable-at-startup nil)
+
+(c/start-section "early" "UI Mode Customization")
 
 (setq c/monospace-font "Roboto Mono"
       c/monospace-font-size 15)
@@ -17,12 +42,9 @@
         '(right-fringe . 16)
         '(menu-bar-lines . 0)
         '(tool-bar-lines . 0)
-        '(vertical-scroll-bars))
+        '(vertical-scroll-bars)
+        '(fullscreen . maximized))
        default-frame-alist))
-
-  (push '(menu-bar-lines . 0)   default-frame-alist)
-  (push '(tool-bar-lines . 0)   default-frame-alist)
-  (push '(vertical-scroll-bars) default-frame-alist)
 
 (setq frame-inhibit-implied-resize t)
 
@@ -31,7 +53,4 @@
 (menu-bar-mode -1)
 (tab-bar-mode 1)
 
-;; Start in fullscreen
-(push '(fullscreen . maximized) default-frame-alist)
-
-
+(c/start-section "void" "Between early-init and init")

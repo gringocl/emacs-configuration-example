@@ -1,5 +1,11 @@
 ;;; init.el -*- lexical-binding: t; -*-
 
+(c/start-section "init" "Start")
+
+(defvar c/init-el-start-time (current-time) "Time when init.el was started")
+
+(c/start-section "init" "elpaca")
+
 ;; Install Elpaca
 (defvar elpaca-installer-version 0.8)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
@@ -9,11 +15,15 @@
                               :ref nil :depth 1
                               :files (:defaults "elpaca-test.el" (:exclude "extensions"))
                               :build (:not elpaca--activate-package)))
+
+(c/start-section "init" "elpaca-let")
 (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
        (build (expand-file-name "elpaca/" elpaca-builds-directory))
        (order (cdr elpaca-order))
        (default-directory repo))
+       (c/start-section "init" "elpaca-repo")
   (add-to-list 'load-path (if (file-exists-p build) build repo))
+  (c/start-section "init" "elpaca-build-repo")
   (unless (file-exists-p repo)
     (make-directory repo t)
     (when (< emacs-major-version 28) (require 'subr-x))
@@ -33,22 +43,44 @@
             (progn (message "%s" (buffer-string)) (kill-buffer buffer))
           (error "%s" (with-current-buffer buffer (buffer-string))))
       ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+  (c/start-section "init" "elpaca-autoloads")
   (unless (require 'elpaca-autoloads nil t)
     (require 'elpaca)
     (elpaca-generate-autoloads "elpaca" repo)
     (load "./elpaca-autoloads")))
 (add-hook 'after-init-hook #'elpaca-process-queues)
 (elpaca `(,@elpaca-order))
+(c/start-section "init" "elpaca-use-package")
 
 (elpaca elpaca-use-package
   (elpaca-use-package-mode))
 
-(use-package literate-config
-  :ensure (:host github :repo "aaronjensen/emacs-literate-config" :protocol ssh :wait t))
+(setq use-package-always-ensure t)
+
+(c/start-section "init" "Install Literate Config")
+
+(elpaca (literate-config :host github :repo "aaronjensen/emacs-literate-config" :protocol ssh :wait t))
+
+(add-hook 'literate-config-before-section-hook
+          (lambda (section)
+            (c/start-section "config" section)))
+
+(unless noninteractive
+  (add-hook 'elpaca-after-init-hook
+            (lambda ()
+              (let ((inhibit-message t))
+                (message "early-init.el: %d ms, init.el: %d ms, config.el: %d ms, post: %d ms\nInitial: %d ms, Total: %d ms"
+                         (* 1000 (float-time (time-subtract c/init-el-start-time c/early-init-el-start-time)))
+                         (* 1000 (float-time (time-subtract c/config-el-start-time c/init-el-start-time)))
+                         (* 1000 (float-time (time-subtract c/config-el-end-time c/config-el-start-time)))
+                         (* 1000 (float-time (time-subtract (current-time) c/config-el-end-time)))
+                         (* 1000 (float-time (time-subtract c/config-el-end-time c/early-init-el-start-time)))
+                         (* 1000 (float-time (time-subtract (current-time) c/early-init-el-start-time)))))) -90))
+
+(defvar c/config-el-start-time (current-time))
+
+(c/start-section "init" "Load Config")
 
 (literate-config-init)
 
-;; Prevent Custom from modifying this file.
-(setq custom-file (expand-file-name
-                   (format "custom-%d-%d.el" (emacs-pid) (random))
-                   temporary-file-directory))
+(defvar c/config-el-end-time (current-time))

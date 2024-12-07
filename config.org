@@ -267,7 +267,7 @@ generate the filenames. This is taken from Doom Emacs.
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :init
+  :config
   (vertico-mode))
 #+end_src
 
@@ -360,7 +360,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
   :bind (:map minibuffer-local-map
               ("M-A" . marginalia-cycle))
 
-  :init
+  :config
   (marginalia-mode))
 #+end_src
 
@@ -424,7 +424,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package ws-butler
-  :init (ws-butler-global-mode))
+  :config (ws-butler-global-mode))
 #+end_src
 
 ** Spell Checking (Flyspell)
@@ -572,21 +572,22 @@ Start git commit in insert mode
 
 #+begin_src emacs-lisp
 (use-feature which-key
-  :init
+  :config
   (which-key-mode))
 #+end_src
 
 ** Helpful
 
 #+begin_src emacs-lisp
-(use-package helpful
-  :bind (
-         ;; Remap standard commands
-         ([remap describe-function] . #'helpful-callable)
-         ([remap describe-command] . #'helpful-command)
-         ([remap describe-variable] . #'helpful-variable)
-         ([remap describe-symbol] . #'helpful-symbol)
-         ([remap describe-key] . #'helpful-key)))
+  (use-package helpful
+    :hook (helpful-mode . visual-line-mode)
+    :bind (
+           ;; Remap standard commands
+           ([remap describe-function] . #'helpful-callable)
+           ([remap describe-command] . #'helpful-command)
+           ([remap describe-variable] . #'helpful-variable)
+           ([remap describe-symbol] . #'helpful-symbol)
+           ([remap describe-key] . #'helpful-key)))
 #+end_src
 
 * LLM Chat
@@ -697,7 +698,6 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 (use-package undo-fu-session
   :config
   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'"))
-  :init
   (undo-fu-session-global-mode))
 #+end_src
 
@@ -708,7 +708,7 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 #+begin_src emacs-lisp
 (use-feature org-mode
   :hook (org-mode . corfu-mode)
-  :config
+  :init
   (setq org-edit-src-content-indentation 0))
 #+end_src
 
@@ -735,7 +735,7 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 
 #+begin_src emacs-lisp
 (use-package vterm
-  :init
+  :config
   (setq vterm-always-compile-module t
         ;; Defaults to 0.1. Decreasing this greatly impacts performance of
         ;; rendering large batches of text.

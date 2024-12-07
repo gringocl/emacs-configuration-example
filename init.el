@@ -59,7 +59,7 @@
 
 (c/start-section "init" "Install Literate Config")
 
-(elpaca (literate-config :host github :repo "aaronjensen/emacs-literate-config" :protocol ssh :wait t))
+(elpaca (literate-config :wait t :host github :repo "aaronjensen/emacs-literate-config" :protocol ssh))
 
 (add-hook 'literate-config-before-section-hook
           (lambda (section)

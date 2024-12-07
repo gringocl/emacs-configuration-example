@@ -38,6 +38,7 @@ The two packages are the first to load in the configuration
 
   (leader-key-set
    "b b" #'consult-buffer
+   "h k" #'describe-key
    "h v" #'describe-variable
    "h f" #'describe-function
    "g g" #'magit-status

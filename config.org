@@ -386,6 +386,203 @@ generate the filenames. This is taken from Doom Emacs.
 #+end_src
 * User Interface
 
+** Nano Theme
+
+#+begin_src emacs-lisp
+(use-package nano-theme
+  :ensure (nano-theme :host github :repo "aaronjensen/nano-theme" :protocol ssh)
+  :config
+  (nano-mode)
+  (nano-light))
+#+end_src
+
+** Nano modeline
+
+#+begin_src emacs-lisp
+(use-package memoize)
+(use-package nano-modeline
+  :ensure (nano-modeline :host github :repo "rougier/nano-modeline")
+  :demand t
+  :init
+  (setq-default mode-line-format nil)
+  (add-hook 'after-change-major-mode-hook #'c/nano-modeline)
+
+  :preface
+  (defun c/nano-modeline ()
+    "Set modeline accordingly"
+    (cond ((derived-mode-p 'prog-mode)
+           (c/nano-modeline-prog-mode))
+          ((derived-mode-p 'vterm-mode))
+          (t
+           (c/nano-modeline-text-mode))))
+
+  :config
+  (require 'memoize)
+
+  ;; This is copy/pasted from nano-modeline but has the truncation removed
+  (defun nano-modeline--make (left right face-prefix)
+    "Build a dynamic mode/header line made of LEFT and RIGHT part,
+using the given FACE-PREFIX as the default."
+
+    `(:eval
+      (let* ((nano-modeline-base-face (nano-modeline--base-face ',face-prefix))
+             (left (mapconcat
+                    (lambda (element)
+                      (if (stringp element)
+                          (propertize element 'face nano-modeline-base-face)
+                        (apply (car element) (cdr element))))
+                    ',left))
+             (right (mapconcat
+                     (lambda (element)
+                       (if (stringp element)
+                           (propertize element 'face nano-modeline-base-face)
+                         (apply (car element) (cdr element))))
+                     ',right))
+             (fringe (if fringes-outside-margins 0.0 -1.0)))
+        (concat (propertize " "
+                            'display `(space :align-to (+ left
+                                                          (,fringe . left-fringe)
+                                                          (0.0 . left-margin))))
+                left
+                (propertize " "
+                            'face `(:inherit ,nano-modeline-base-face)
+                            'display `(space :align-to (- right
+                                                          (,fringe . right-fringe)
+                                                          (0.0 . right-margin)
+                                                          ,(length right))))
+                right))))
+
+  (defun c/nano-modeline-project-root ()
+    "Return the current project name or nil."
+    (when-let* ((project (project-current)))
+      (project-root project)))
+
+  (defun c/nano-modeline-project-name ()
+    "Return the current project name or nil."
+    (when-let* ((project-root (c/nano-modeline-project-root)))
+      (file-name-nondirectory (directory-file-name project-root))))
+
+  (defmemoize c/nano-modeline-project-relative-name (file-name max-width)
+    (c/shorten-directory-path
+     (if-let* ((project-root (c/nano-modeline-project-root)))
+         (file-relative-name file-name project-root)
+       file-name)
+     max-width))
+
+  (defun c/nano-modeline-buffer-file-name ()
+    (when buffer-file-name
+      (c/nano-modeline-project-relative-name
+       (substring-no-properties buffer-file-name)
+       (- (window-width) 20))))
+
+  (defun c/nano-modeline-buffer-name (&optional name)
+    (concat
+     (propertize
+      (or name
+          (c/nano-modeline-buffer-file-name)
+          (format-mode-line "%b"))
+      'face (nano-modeline-face 'name))
+     (propertize
+      (if (and buffer-file-name
+               (buffer-modified-p))
+          (concat (propertize " " 'display '(space :width (3)))
+                  (propertize "⬤" 'display '((raise 0.15) (height 0.4)))
+                  (propertize " " 'display '(space :width (6))))
+        (propertize " " 'display '(space :width (16))))
+      'face (nano-modeline-face 'header))))
+
+  (defvar c/nano-modeline-abbreviations
+    '(("incorporation" . "inc")
+      ("document" . "doc")
+      ("documents" . "docs")
+      ("generation" . "gen")))
+
+  (defun c/nano-modeline-abbreviate (text)
+    (with-temp-buffer
+      (insert text)
+      (goto-char (point-min))
+      (while (re-search-forward "\\b\\w+\\b" nil t)
+        (let* ((word (match-string 0))
+               (abbr (assoc-default word c/nano-modeline-abbreviations)))
+          (when abbr
+            (replace-match abbr))))
+      (buffer-string)))
+
+  (defun c/nano-modeline-project (&rest args)
+    "Current project"
+    (propertize
+     (let ((name (c/nano-modeline-project-name))
+           (max-length 32))
+       (if name
+           (progn
+             (when (> (length name) max-length)
+               (setq name (c/nano-modeline-abbreviate name)))
+
+             (when (> (length name) max-length)
+               (setq name (concat
+                           (substring name 0 (- max-length 1))
+                           "…")))
+
+             (concat "[" name "]"))
+         ""))
+     'face (nano-modeline-face 'project)))
+
+  (defun c/nano-modeline-window-dedicated ()
+    (when (window-dedicated-p)
+      (propertize "🖈 " 'face (nano-modeline-face 'secondary) 'display '(height 0.85))))
+
+  (defun c/nano-modeline-prog-mode (&optional default)
+    "Nano line for prog mode. Can be made DEFAULT mode."
+
+    (funcall nano-modeline-position
+             '((c/nano-modeline-window-dedicated)
+               (c/nano-modeline-buffer-name)
+               (c/nano-modeline-project))
+             '((nano-modeline-cursor-position))
+             default))
+
+  (defun c/nano-modeline-text-mode (&optional default)
+    "Nano line for text mode. Can be made DEFAULT mode."
+
+    (funcall nano-modeline-position
+             '((c/nano-modeline-window-dedicated)
+               (c/nano-modeline-buffer-name)
+               (c/nano-modeline-project))
+             '((nano-modeline-cursor-position))
+             default))
+
+  (defface c/nano-modeline-name-active-face
+    '((t :weight semibold
+         :inherit (variable-pitch nano-modeline-active)))
+    "Active name face.")
+  (defface c/nano-modeline-name-inactive-face
+    '((t :weight semibold
+         :inherit (variable-pitch nano-faded nano-modeline-inactive)))
+    "Inactive name face.")
+  (defface c/nano-modeline-project-active-face
+    '((t :height 0.8
+         :inherit (variable-pitch nano-modeline-active)))
+    "Active project face.")
+  (defface c/nano-modeline-project-inactive-face
+    '((t :height 0.8
+         :inherit (variable-pitch nano-faded nano-modeline-inactive)))
+    "Inactive project face.")
+  (defface c/nano-modeline-secondary-face
+    '((t :height 0.94
+         :inherit (nano-faded)))
+    "Secondary face.")
+
+  (push '(name-active c/nano-modeline-name-active-face) nano-modeline-faces)
+  (push '(name-inactive c/nano-modeline-name-inactive-face) nano-modeline-faces)
+  (push '(project-active c/nano-modeline-project-active-face) nano-modeline-faces)
+  (push '(project-inactive c/nano-modeline-project-inactive-face) nano-modeline-faces)
+  (push '(secondary-active c/nano-modeline-secondary-face) nano-modeline-faces)
+  (push '(secondary-inactive c/nano-modeline-secondary-face) nano-modeline-faces)
+
+  (with-current-buffer "*Messages*"
+    (c/nano-modeline)))
+#+end_src
+
 ** Font Size
 
 #+begin_src emacs-lisp

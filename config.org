@@ -45,6 +45,7 @@ The two packages are the first to load in the configuration
    "f f" #'find-file
    "x" #'execute-extended-command
    "e l" #'find-library
+   "q r" #'restart-emacs
    "T w" #'visual-line-mode))
 #+end_src
 

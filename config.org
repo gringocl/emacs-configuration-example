@@ -46,6 +46,7 @@ The two packages are the first to load in the configuration
    "f f" #'find-file
    "x" #'execute-extended-command
    "u" #'universal-argument
+   ";" #'evilnc-comment-operator
    "TAB" #'evil-switch-to-windows-last-buffer
    "e l" #'find-library
    "q r" #'restart-emacs
@@ -370,6 +371,13 @@ generate the filenames. This is taken from Doom Emacs.
   (evil-collection-init))
 #+end_src
 
+** Evil Nerd Comment
+
+#+begin_src emacs-lisp
+(use-package evil-nerd-commenter
+  :config
+  (evilnc-default-hotkey))
+#+end_src
 * User Interface
 
 ** Font Size

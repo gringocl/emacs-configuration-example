@@ -752,8 +752,8 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
   :config
   (custom-set-variables
    '(mini-frame-show-parameters
-     '((top . 1.0)
-       (width . 1.0)
+     '((top . 0.4)
+       (width . 0.8)
        (left . 0.5)
        (height . 5)
        (left-fringe . 12)

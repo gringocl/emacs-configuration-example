@@ -44,6 +44,7 @@ The two packages are the first to load in the configuration
    "g g" #'magit-status
    "f f" #'find-file
    "x" #'execute-extended-command
+   "TAB" #'evil-switch-to-windows-last-buffer
    "e l" #'find-library
    "q r" #'restart-emacs
    "s u" #'vundo

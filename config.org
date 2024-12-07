@@ -51,6 +51,7 @@ The two packages are the first to load in the configuration
    "x" #'execute-extended-command
    "u" #'universal-argument
    ";" #'evilnc-comment-operator
+   "/" #'consult-ripgrep
    "TAB" #'evil-switch-to-windows-last-buffer
    "e l" #'find-library
    "q r" #'restart-emacs

@@ -380,8 +380,9 @@ generate the filenames. This is taken from Doom Emacs.
 
 #+begin_src emacs-lisp
 (use-package evil-nerd-commenter
-  :config
-  (evilnc-default-hotkey))
+  :commands (evilnc-comment-operator)
+  :bind (
+   ([remap comment-line] . #'evilnc-comment-or-uncomment-lines)))
 #+end_src
 * User Interface
 

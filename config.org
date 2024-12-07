@@ -2,7 +2,11 @@
 #+startup: overview
 #+TODO: DISABLED
 
-* Leader Key
+* Initial packages
+
+The two packages are the first to load in the configuration
+
+** Leader Key
 
 #+begin_src emacs-lisp
 (use-package leader-key
@@ -43,7 +47,7 @@
    "T w" #'visual-line-mode))
 #+end_src
 
-  Completion-at-Point Function Configuration
+** Compdef
 
 Add =:capf= and =:compdef= to =use-package=.
 

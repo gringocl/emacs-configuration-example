@@ -2,6 +2,10 @@
 #+startup: overview
 #+TODO: DISABLED
 
+* Things to do
+** Window movement
+  - vterm
+** New window placement for magit and vterm
 * Initial packages
 
 The two packages are the first to load in the configuration

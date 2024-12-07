@@ -196,10 +196,10 @@ generate the filenames. This is taken from Doom Emacs.
 #+begin_src emacs-lisp
 (use-package evil
   :init
-  (setq evil-want-keybinding nil)
+  (setq evil-want-keybinding nil
+        evil-disable-insert-state-bindings t)
   :config
-  (evil-mode 1)
-  (setq evil-disable-insert-state-bindings t))
+  (evil-mode 1))
 #+end_src
 
 ** Evil Org

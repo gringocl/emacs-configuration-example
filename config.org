@@ -197,7 +197,8 @@ generate the filenames. This is taken from Doom Emacs.
 (use-package evil
   :init
   (setq evil-want-keybinding nil
-        evil-disable-insert-state-bindings t)
+        evil-disable-insert-state-bindings t
+        evil-respect-visual-line-mode t)
   :config
   (evil-mode 1)
   (customize-set-variable 'evil-undo-system 'undo-redo))

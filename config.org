@@ -46,6 +46,7 @@ The two packages are the first to load in the configuration
    "x" #'execute-extended-command
    "e l" #'find-library
    "q r" #'restart-emacs
+   "s u" #'vundo
    "T w" #'visual-line-mode))
 #+end_src
 
@@ -692,6 +693,12 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 #+end_src
 
 * Undo
+
+** Vundo
+
+#+begin_src emacs-lisp
+(use-package vundo)
+#+end_src
 
 ** Undo Fu Session
 

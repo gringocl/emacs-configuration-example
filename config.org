@@ -588,17 +588,51 @@ generate the filenames. This is taken from Doom Emacs.
 ** Nano Theme
 
 #+begin_src emacs-lisp
+(use-package memoize)
 (use-package nano-theme
   :ensure (nano-theme :host github :repo "aaronjensen/nano-theme" :protocol ssh)
   :config
-  (nano-mode)
-  (nano-light))
+  :init
+  ;; Vertical window divider
+  (setq window-divider-default-right-width 1)
+  (setq window-divider-default-bottom-width 1)
+  (setq window-divider-default-places t)
+  (window-divider-mode 1)
+
+  ;; No ugly button for checkboxes
+  (setq widget-image-enable nil)
+
+  (setq
+   nano-window-divider-show t
+
+   nano-light-background "#FFFFFF"          ;; While
+   nano-light-highlight "#F9FAFB"           ;; Cool Gray 50
+   nano-light-background-alt "#F3F4F6"      ;; Cool Gray 100
+   nano-light-subtle "#E5E7EB"              ;; Cool Gray 200
+   nano-light-fringe "#D1D5DB"              ;; Cool Gray 300
+   nano-light-cursor-alt "#9CA3AF"          ;; Cool Gray 400
+   nano-light-faded "#6B7280"               ;; Cool Gray 600
+   nano-light-bold "#374151"                ;; Cool Gray 700
+   nano-light-foreground "#1F2937"          ;; Cool Gray 800
+   nano-light-foreground-alt "#111827"      ;; Cool Gray 900
+   nano-light-strong "#000000"              ;; Black
+   nano-light-critical "#EA580C"            ;; Orange 600
+   nano-light-salient "#5B21B6"             ;; Violet 800
+   nano-light-selected-background "#BAE6FD" ;; Sky 200
+   nano-light-popout "#0369A1"              ;; Sky 700
+   )
+
+  (load-theme 'nano t)
+
+  (custom-theme-set-faces
+   'user
+   '(variable-pitch ((t (:family "SF Pro" :height 150 :weight normal))))
+   '(vundo-default ((t (:family "Iosevka SS04"))))))
 #+end_src
 
-** Nano modeline
+** Nano Modeline
 
 #+begin_src emacs-lisp
-(use-package memoize)
 (use-package nano-modeline
   :ensure (nano-modeline :host github :repo "rougier/nano-modeline")
   :demand t
@@ -811,10 +845,79 @@ using the given FACE-PREFIX as the default."
 ** Tab Bar
 
 #+begin_src emacs-lisp
+(leader-key-set "t n" #'tab-new
+                "t c" #'tab-close
+                "t C" #'tab-close-other
+                "t t" #'tab-switch
+                "t r" #'tab-rename
+                "t d" #'tab-window-detach
+                "t TAB" #'tab-bar-switch-to-recent-tab
+                "t <" #'tab-bar-move-tab-backward
+                "t >" #'tab-move
+                "t p" #'c/tab-switch-project
+                "e e" #'c/tab-emacs-config
+                "o a" #'c/tab-org-agenda
+                "w u" #'tab-bar-history-back
+                "w C-r" #'tab-bar-history-forward)
+
 (use-feature tab-bar
-  :bind (("s-t" . #'tab-new)
+  :after nano-theme
+  :bind (("s-1" . #'tab-select)
+         ("s-2" . #'tab-select)
+         ("s-3" . #'tab-select)
+         ("s-4" . #'tab-select)
+         ("s-5" . #'tab-select)
+         ("s-6" . #'tab-select)
+         ("s-7" . #'tab-select)
+         ("s-8" . #'tab-select)
+         ("s-9" . #'tab-select)
          ("s-w" . #'tab-close)
-         ("s-T" . #'tab-undo))
+         ("s-T" . #'tab-undo)
+         ("s-}" . #'tab-next)
+         ("s-{" . #'tab-previous)
+         ("s-t" . #'tab-new)
+
+         :map tab-bar-map
+         ("<wheel-up>" . #'ignore)
+         ("<wheel-down>" . #'ignore)
+
+         :repeat-map tab-bar-move-repeat-map
+         ("<" . #'tab-bar-move-tab-backward)
+         (">" . #'tab-move)
+
+         :repeat-map tab-bar-history-repeat-map
+         ("u" . #'tab-bar-history-back)
+         ("C-r" . #'tab-bar-history-forward))
+
+  :preface
+  (defun c/tab-switch-project (project-to-switch)
+    "Switch to project tab and find project file.
+Only if the switched to buffer is not of that project."
+    (interactive (list (project-prompt-project-dir)))
+
+    (let* ((project-name (c/project-name project-to-switch))
+           (tab-name project-name)
+           new-tab
+           (tab-bar-new-tab-choice
+            (lambda ()
+              (setq new-tab t)
+              (if (string= project-name (c/project-name))
+                  (current-buffer)
+                (let ((default-directory project-to-switch))
+                  (project-find-file))))))
+      (tab-bar-switch-to-tab tab-name)
+
+      ;; When switching, open a project file if the current-buffer is not one
+      (unless new-tab
+        (funcall tab-bar-new-tab-choice))))
+
+  (defun c/tab-emacs-config ()
+    "Edit the `dotfile', in the current window."
+    (interactive)
+    (let ((tab-bar-new-tab-choice "*scratch*"))
+      (tab-bar-switch-to-tab ".emacs.d")
+      (find-file-existing (concat user-emacs-directory "config.org"))))
+
 
   :config
   (setq tab-bar-show t
@@ -822,9 +925,27 @@ using the given FACE-PREFIX as the default."
         tab-bar-new-button nil
         tab-bar-close-button-show nil
         tab-bar-new-tab-to 'rightmost
+        tab-bar-tab-name-function #'c/name-tab-by-project-or-default
         ;; If this is the default (t) the name format function below causes
         ;; emacs to hang on boot since commit ca3763af5cc2758ec71700029558e6ecc4379ea9
-        tab-bar-auto-width nil))
+        tab-bar-auto-width nil)
+
+  (tab-bar-history-mode)
+
+  (defun c/name-tab-by-project-or-default ()
+    "Return project name if in a project, or default tab-bar name if not.
+The default tab-bar name uses the buffer name."
+    (or (c/project-name)
+        (tab-bar-tab-name-current)))
+
+  (defun c/tab-bar--tabs-recent (&optional tabs frame)
+    "Ensure that the current tab is included."
+    ;; Return the list of tabs sorted by recency.
+    (let* ((tabs (or tabs (funcall tab-bar-tabs-function frame))))
+      (seq-sort-by (lambda (tab) (or (alist-get 'time tab) 0)) #'>
+                   tabs)))
+
+  (advice-add #'tab-bar--tabs-recent :override #'c/tab-bar--tabs-recent))
 #+end_src
 
 *** Modern Tab Styling

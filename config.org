@@ -1067,7 +1067,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
   (marginalia-mode))
 #+end_src
 
-** DISABLED Miniframe
+** Miniframe
 
 #+begin_src emacs-lisp
 (use-package mini-frame

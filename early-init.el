@@ -29,13 +29,16 @@
 (c/start-section "early" "UI Mode Customization")
 
 (setq c/monospace-font "Roboto Mono"
-      c/monospace-font-size 15)
+      c/monospace-font-size 15
+      c/variable-pitch-font "Fira Sans"
+      c/variable-pitch-font-size 15)
 
 ;; Configure default frame settings before the first frame is shown
 (setq default-frame-alist
       (append
        (list
         `(font . ,(concat c/monospace-font "-" (number-to-string c/monospace-font-size)))
+        `(font . ,(concat c/variable-pitch-font "-" (number-to-string c/variable-pitch-font-size)))
         '(internal-border-width . 0)
         '(undecorated-round . t)
         '(left-fringe . 16)

@@ -6,6 +6,8 @@
 ** Window movement
   - vterm
 ** New window placement for magit and vterm
+** Mouse over tabs doesn't change
+** `c/project-name` missing
 * Utility Functions
 ** Hooks
 

@@ -1151,6 +1151,21 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 * Projects
 
+** Utility Functions
+
+#+begin_src emacs-lisp
+(defun c/project-name (&optional project-root)
+  "Return the current project name or nil."
+  (when-let* ((project-root (or project-root
+                                (c/project-root))))
+    (file-name-nondirectory (directory-file-name project-root))))
+
+(defun c/project-root ()
+  "Return the current project name or nil."
+  (when-let* ((project (project-current)))
+    (project-root project)))
+#+end_src
+
 ** Tree View (Treemacs)
 
 #+begin_src emacs-lisp

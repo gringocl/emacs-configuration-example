@@ -155,56 +155,7 @@ triggering hooks during startup."
   ;; once, when the scratch/dashboard buffer is first displayed.
   (add-hook 'window-buffer-change-functions #'c/init-switch-buffer-hook 99)
   (c/run-hook-on 'c/first-input-hook '(pre-command-hook))
-  (c/run-hook-on 'c/first-file-hook '(find-file-hook dired-initial-position-hook)))(defvar c/first-input-hook nil
-  "Transient hooks run before the first user input.")
-(put 'c/first-input-hook 'permanent-local t)
-
-(defvar c/first-file-hook nil
-  "Transient hooks run before the first interactively opened file.")
-(put 'c/first-file-hook 'permanent-local t)
-
-(unless noninteractive
-  ;; Initialize UI as late as possible. `window-buffer-change-functions' runs
-  ;; once, when the scratch/dashboard buffer is first displayed.
-  (add-hook 'window-buffer-change-functions #'c/init-switch-buffer-hook 99)
-  (c/run-hook-on 'c/first-input-hook '(pre-command-hook))
   (c/run-hook-on 'c/first-file-hook '(find-file-hook dired-initial-position-hook)))
-
-(defun c/run-hook-on (hook-var trigger-hooks)
-  "Configure HOOK-VAR to be invoked exactly once when any of the TRIGGER-HOOKS
-are invoked *after* Emacs has initialized (to reduce false positives). Once
-HOOK-VAR is triggered, it is reset to nil.
-
-HOOK-VAR is a quoted hook.
-TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
-  (dolist (hook trigger-hooks)
-    (let ((fn (intern (format "%s-init-on-%s-h" hook-var hook))))
-      (fset
-       fn (lambda (&rest _)
-            ;; Only trigger this after Emacs has initialized.
-            (when (and after-init-time
-                       (or (daemonp)
-                           ;; In some cases, hooks may be lexically unset to
-                           ;; inhibit them during expensive batch operations on
-                           ;; buffers (such as when processing buffers
-                           ;; internally). In these cases we should assume this
-                           ;; hook wasn't invoked interactively.
-                           (and (boundp hook)
-                                (symbol-value hook))))
-              (let ((c/time-hooks hook-var))
-                (c/run-hooks hook-var))
-              (set hook-var nil))))
-      (cond ((daemonp)
-             ;; In a daemon session we don't need all these lazy loading
-             ;; shenanigans. Just load everything immediately.
-             (add-hook 'after-init-hook fn 'append))
-            ((eq hook 'find-file-hook)
-             ;; Advise `after-find-file' instead of using `find-file-hook'
-             ;; because the latter is triggered too late (after the file has
-             ;; opened and modes are all set up).
-             (advice-add 'after-find-file :before fn '((depth . -101))))
-            ((add-hook hook fn -101)))
-      fn)))
 #+end_src
 
 * Initial packages
@@ -1150,6 +1101,21 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 #+end_src
 
 * Projects
+
+** Utility Functions
+
+#+begin_src emacs-lisp
+(defun c/project-name (&optional project-root)
+  "Return the current project name or nil."
+  (when-let* ((project-root (or project-root
+                                (c/project-root))))
+    (file-name-nondirectory (directory-file-name project-root))))
+
+(defun c/project-root ()
+  "Return the current project name or nil."
+  (when-let* ((project (project-current)))
+    (project-root project)))
+#+end_src
 
 ** Tree View (Treemacs)
 

@@ -1294,6 +1294,10 @@ Start git commit in insert mode
 #+begin_src emacs-lisp
 (use-package smartparens
   :config (smartparens-global-mode))
+
+(use-package rainbow-delimiters
+  :hook ((org-mode . rainbow-delimiters-mode)
+         (emacs-lisp-mode . rainbow-delimiters-mode)))
 #+end_src
 
 ** Line Numbers

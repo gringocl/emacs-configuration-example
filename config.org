@@ -547,7 +547,6 @@ generate the filenames. This is taken from Doom Emacs.
 (use-package nano-theme
   :ensure (nano-theme :host github :repo "aaronjensen/nano-theme" :protocol ssh)
   :config
-  :init
   ;; Vertical window divider
   (setq window-divider-default-right-width 1)
   (setq window-divider-default-bottom-width 1)
@@ -1000,7 +999,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package orderless
-  :init
+  :config
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
@@ -1039,7 +1038,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
        (internal-border-width . 1)))
    '(mini-frame-color-shift-step 7))
   (setq mini-frame-internal-border-color "black")
-  :init
   (mini-frame-mode))
 #+end_src
 

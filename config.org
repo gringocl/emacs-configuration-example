@@ -559,7 +559,7 @@ generate the filenames. This is taken from Doom Emacs.
   (setq
    nano-window-divider-show t
 
-   nano-light-background "#FFFFFF"          ;; While
+   nano-light-background "#FFFFFF"          ;; White
    nano-light-highlight "#F9FAFB"           ;; Cool Gray 50
    nano-light-background-alt "#F3F4F6"      ;; Cool Gray 100
    nano-light-subtle "#E5E7EB"              ;; Cool Gray 200
@@ -1240,7 +1240,6 @@ Two space indentation by default.
 #+begin_src emacs-lisp
 (use-package markdown-mode
   :config
-
   (add-hook 'markdown-mode-hook #'visual-line-mode)
   (add-hook 'markdown-mode-hook #'visual-wrap-prefix-mode)
 

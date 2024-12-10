@@ -1045,6 +1045,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package embark
+  :after vertico
   :bind (:map
          vertico-map
          ("C-c C-o" . #'embark-export)

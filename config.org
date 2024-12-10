@@ -1305,15 +1305,16 @@ Start git commit in insert mode
 ** Helpful
 
 #+begin_src emacs-lisp
-  (use-package helpful
-    :hook (helpful-mode . visual-line-mode)
-    :bind (
-           ;; Remap standard commands
-           ([remap describe-function] . #'helpful-callable)
-           ([remap describe-command] . #'helpful-command)
-           ([remap describe-variable] . #'helpful-variable)
-           ([remap describe-symbol] . #'helpful-symbol)
-           ([remap describe-key] . #'helpful-key)))
+(use-package helpful
+  :hook (helpful-mode . visual-line-mode)
+  :commands (helpful-callable helpful-command helpful-variable helpful-symbol helpful-key)
+  :bind (
+         ;; Remap standard commands
+         ([remap describe-function] . #'helpful-callable)
+         ([remap describe-command] . #'helpful-command)
+         ([remap describe-variable] . #'helpful-variable)
+         ([remap describe-symbol] . #'helpful-symbol)
+         ([remap describe-key] . #'helpful-key)))
 #+end_src
 
 * Undo

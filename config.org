@@ -1122,11 +1122,64 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 ** Tree View (Treemacs)
 
 #+begin_src emacs-lisp
+(use-package all-the-icons)
+
 (use-package treemacs
-  :commands (treemacs)
   :bind ("s-b" . #'treemacs)
   :config
-  (treemacs-follow-mode))
+  (defun c/treemacs-line-spacing ()
+    "Disable line spacing for treemacs."
+    (setq line-spacing nil))
+
+  (add-hook 'treemacs-mode-hook #'c/treemacs-line-spacing)
+
+  (setq treemacs-user-mode-line-format 'none
+        treemacs-is-never-other-window t
+        treemacs-sorting 'alphabetic-case-insensitive-asc
+        treemacs-wrap-around nil
+        treemacs-collapse-dirs 0
+        ;; Don't indent under the root, but indent everywhere else
+        ;; 20 indentation levels should be enough - Aaron, Sat May 06 2023
+        treemacs-indentation-string (cons "" (make-list 20 (propertize " " 'display '(space-width 1.0)))))
+
+  (treemacs-follow-mode t)
+  (treemacs-filewatch-mode t)
+  (treemacs-fringe-indicator-mode t)
+
+  (require 'all-the-icons)
+
+  (treemacs-create-theme "simple"
+    :config
+    (progn
+      (treemacs-create-icon :icon (format "%s\t" (all-the-icons-octicon "repo" :height 1.2 :v-adjust -0.1 :face 'font-lock-string-face))
+                            :extensions (root-closed root-open)
+                            :fallback 'same-as-icon)
+      (treemacs-create-icon :icon (format "%s%s" (all-the-icons-material "expand_more" :height 0.8 :face 'font-lock-doc-face)
+                                          (propertize " " 'display '(space . (:width (4)))))
+                            :extensions (dir-open)
+                            :fallback 'same-as-icon)
+      (treemacs-create-icon :icon (format "%s%s" (all-the-icons-material "chevron_right" :height 0.8 :face 'font-lock-doc-face)
+                                          (propertize " " 'display '(space . (:width (4)))))
+                            :extensions (dir-closed)
+                            :fallback 'same-as-icon)
+      (treemacs-create-icon :icon (propertize " " 'display '(space . (:width (18))))
+                            :extensions (fallback)
+                            :fallback 'same-as-icon)))
+  (treemacs-load-theme "simple"))
+
+(use-package treemacs-evil
+  :after (treemacs evil)
+  :demand t)
+
+(use-package treemacs-magit
+  :after (treemacs magit)
+  :demand t)
+
+(use-package treemacs-tab-bar
+  :after (treemacs)
+  :demand t
+  :config
+  (treemacs-set-scope-type 'Tabs))
 #+end_src
 
 ** Workspaces (Tabspaces)

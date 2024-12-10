@@ -1388,6 +1388,31 @@ Start git commit in insert mode
   :bind (("s-i" . vterm-toggle)))
 #+end_src
 
+* Test packages
+
+** Transient showcase
+
+#+begin_src emacs-lisp
+(use-package transient-showcase
+  :ensure (transient-showcase :host github :repo "positron-solutions/transient-showcase" :protocol ssh)
+#+end_src
+
+** pgmacs
+
+#+begin_src emacs-lisp
+(use-package pgmacs
+  :commands (pgmacs)
+  :ensure (pgmacs :host github :repo "emarsden/pgmacs" :protocol ssh)
+  :defer t)
+
+#+end_src
+
+** message-db-viewer
+
+#+begin_src emacs-lisp
+(use-package message-db
+  :ensure (message-db :host github :repo "gringocl/message-db.el"))
+#+end_src
 * Startup Time
 
 #+begin_src emacs-lisp

@@ -923,11 +923,21 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :config
-  (vertico-mode))
+  :hook (c/first-input-hook . vertico-mode))
+  ;; :config
+  ;; (vertico-mode))
 #+end_src
 
 ** Completion At Point
+
+*** Additional Completion-at-Point Functions (cape)
+
+#+begin_src emacs-lisp
+(use-package cape
+  :hook ((completion-at-point-functions . cape-elisp-block))
+  :config
+  (setq cape-dabbrev-check-other-buffers nil))
+#+end_src
 
 *** Ripgrep Completion-at-Point Function
 
@@ -935,18 +945,8 @@ The default tab-bar name uses the buffer name."
 (use-package ripgrep-capf
   :after cape
   :ensure (:host github :repo "aaronjensen/ripgrep-capf" :protocol ssh)
-  :init
-  (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
-#+end_src
-
-*** Additional Completion-at-Point Functions (cape)
-
-#+begin_src emacs-lisp
-(use-package cape
-  :init
-  (add-hook 'completion-at-point-functions #'cape-elisp-block)
   :config
-  (setq cape-dabbrev-check-other-buffers nil))
+  (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
 #+end_src
 
 *** Inline Completion

@@ -7,7 +7,8 @@
   - vterm
 ** New window placement for magit and vterm
 ** Mouse over tabs doesn't change
-** `c/project-name` missing
+** Snippet
+** Imagine a way to keep automated test output in a buffer to utilize as library documentation, ie could be foldable, searchable?
 * Utility Functions
 ** Hooks
 

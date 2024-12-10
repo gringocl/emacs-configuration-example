@@ -1080,7 +1080,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package ws-butler
-  :config (ws-butler-global-mode))
+  :hook (c/first-buffer-hook . ws-butler-global-mode))
 #+end_src
 
 ** Spell Checking (Flyspell)

@@ -158,6 +158,18 @@ triggering hooks during startup."
   (c/run-hook-on 'c/first-input-hook '(pre-command-hook))
   (c/run-hook-on 'c/first-file-hook '(find-file-hook dired-initial-position-hook)))
 #+end_src
+** Misc
+
+#+begin_src emacs-lisp
+(defun  c/insert-log-date ()
+    "Insert a date in my typical log format.
+
+e.g. Fri Jan 07 2022"
+    (interactive)
+    (insert (format-time-string "%a %b %-e %Y")))
+
+(global-set-key (kbd "C-x C-d") 'c/insert-log-date)
+#+end_src
 
 * Initial packages
 

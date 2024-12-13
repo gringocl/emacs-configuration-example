@@ -892,6 +892,20 @@ Only if the switched to buffer is not of that project."
       (tab-bar-switch-to-tab ".emacs.d")
       (find-file-existing (concat user-emacs-directory "config.org"))))
 
+  ;; (defvar org-agenda-window-setup)
+  ;; (defun c/tab-org-agenda (&optional arg)
+  ;;   "Show my custom agenda and refresh it first chance we get."
+  ;;   (interactive "P")
+  ;;   (let ((tab-bar-new-tab-choice "*scratch*"))
+  ;;     (tab-bar-switch-to-tab "@agenda"))
+  ;;   (tab-bar-move-tab-to 0)
+  ;;   (if-let* ((window (get-buffer-window "*Org Agenda( )*")))
+  ;;       (select-window window)
+  ;;     (let ((org-agenda-window-setup 'only-window))
+  ;;       (org-agenda arg " ")))
+  ;;   (delete-other-windows)
+  ;;   (let ((inhibit-message t))
+  ;;     (org-agenda-redo)))
 
   :config
   (setq tab-bar-show t

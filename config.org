@@ -1422,14 +1422,14 @@ Start git commit in insert mode
 
 * Test packages
 
-** Transient showcase
+** DISABLED Transient showcase
 
 #+begin_src emacs-lisp
 (use-package transient-showcase
   :ensure (transient-showcase :host github :repo "positron-solutions/transient-showcase" :protocol ssh)
 #+end_src
 
-** pgmacs
+** DISABLED pgmacs
 
 #+begin_src emacs-lisp
 (use-package pgmacs

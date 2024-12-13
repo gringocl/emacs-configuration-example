@@ -504,9 +504,17 @@ generate the filenames. This is taken from Doom Emacs.
 #+begin_src emacs-lisp
 (use-package evil
   :hook (c/first-input-hook . evil-mode)
-  :defer t
+  :bind (:map evil-normal-state-map
+              ("-" . dired-jump)
+              ("C-h" . 'windmove-left)
+              ("C-j" . 'windmove-down)
+              ("C-k" . 'windmove-up)
+              ("C-l" . 'windmove-right))
   :init
   (setq evil-want-keybinding nil
+        evil-want-C-u-scroll t
+        evil-want-C-d-scroll t
+        evil-want-C-h-delete t
         evil-disable-insert-state-bindings t
         evil-respect-visual-line-mode t)
   :config

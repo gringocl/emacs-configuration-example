@@ -212,7 +212,8 @@ The two packages are the first to load in the configuration
    "h v" #'describe-variable
    "h f" #'describe-function
    "g g" #'magit-status
-   "f f" #'find-file
+   "f f" #'project-find-file
+   "f F" #'find-file
    "x" #'execute-extended-command
    "u" #'universal-argument
    ";" #'evilnc-comment-operator

@@ -3,161 +3,11 @@
 #+TODO: DISABLED
 
 * Things to do
-** Window movement
-  - vterm
 ** New window placement for magit and vterm
 ** Mouse over tabs doesn't change
-** Snippet
+** Snippets
 ** Imagine a way to keep automated test output in a buffer to utilize as library documentation, ie could be foldable, searchable?
 * Utility Functions
-** Hooks
-
-#+begin_src emacs-lisp
-(define-error 'c/hook-error "Error in a startup hook" 'c/error)
-
-(defmacro c/add-transient-hook (name hook-or-function &rest forms)
-  "Attaches a self-removing function to HOOK-OR-FUNCTION.
-
-FORMS are evaluated once, when that function/hook is first invoked, then never
-again.
-
-HOOK-OR-FUNCTION can be a quoted hook or a sharp-quoted function (which will be
-advised)."
-  (declare (indent 1))
-  (let ((append (if (eq (car forms) :after) (pop forms)))
-        ;; Avoid `make-symbol' and `gensym' here because an interned symbol is
-        ;; easier to debug in backtraces (and is visible to `describe-function')
-        (fn name))
-    `(let ((sym ,hook-or-function))
-       (defun ,fn (&rest _)
-         ,(format "Transient hook for %S" (c/unquote hook-or-function))
-         ,@forms
-         (let ((sym ,hook-or-function))
-           (cond ((functionp sym) (advice-remove sym #',fn))
-                 ((symbolp sym)   (remove-hook sym #',fn))))
-         (unintern ',fn nil))
-       (cond ((functionp sym)
-              (advice-add ,hook-or-function ,(if append :after :before) #',fn))
-             ((symbolp sym)
-              (put ',fn 'permanent-local-hook t)
-              (add-hook sym #',fn ,append))))))
-
-(defvar c/time-hooks nil)
-
-(defun c/run-hook (hook)
-  "Run HOOK (a hook function) with better error handling.
-Meant to be used with `run-hook-wrapped'."
-  (condition-case-unless-debug e
-      (if c/time-hooks
-          (let ((time (current-time)))
-            (funcall hook)
-            (let ((inhibit-message t)
-                  (elapsed-time (* 1000 (float-time (time-subtract (current-time) time)))))
-              (when (> elapsed-time 2)
-                (message "%S • %4dms • %S" c/time-hooks elapsed-time hook))))
-        (funcall hook))
-    (error
-     (signal 'c/hook-error (list hook e))))
-  ;; return nil so `run-hook-wrapped' won't short circuit
-  nil)
-
-(defun c/run-hooks (&rest hooks)
-  "Run HOOKS (a list of hook variable symbols) with better error handling.
-Is used as advice to replace `run-hooks'."
-  (dolist (hook hooks)
-    (condition-case-unless-debug e
-        (run-hook-wrapped hook #'c/run-hook)
-      (c/hook-error
-       (unless debug-on-error
-         (lwarn hook :error "Error running hook %S because: %s"
-                (if (symbolp (cadr e))
-                    (symbol-name (cadr e))
-                  (cadr e))
-                (caddr e)))
-       (signal 'c/hook-error (cons hook (cdr e)))))))
-
-(defun c/run-hook-on (hook-var trigger-hooks)
-  "Configure HOOK-VAR to be invoked exactly once when any of the TRIGGER-HOOKS
-are invoked *after* Emacs has initialized (to reduce false positives). Once
-HOOK-VAR is triggered, it is reset to nil.
-
-HOOK-VAR is a quoted hook.
-TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
-  (dolist (hook trigger-hooks)
-    (let ((fn (intern (format "%s-init-on-%s-h" hook-var hook))))
-      (fset
-       fn (lambda (&rest _)
-            ;; Only trigger this after Emacs has initialized.
-            (when (and after-init-time
-                       (or (daemonp)
-                           ;; In some cases, hooks may be lexically unset to
-                           ;; inhibit them during expensive batch operations on
-                           ;; buffers (such as when processing buffers
-                           ;; internally). In these cases we should assume this
-                           ;; hook wasn't invoked interactively.
-                           (and (boundp hook)
-                                (symbol-value hook))))
-              (let ((c/time-hooks hook-var))
-                (c/run-hooks hook-var))
-              (set hook-var nil))))
-      (cond ((daemonp)
-             ;; In a daemon session we don't need all these lazy loading
-             ;; shenanigans. Just load everything immediately.
-             (add-hook 'after-init-hook fn 'append))
-            ((eq hook 'find-file-hook)
-             ;; Advise `after-find-file' instead of using `find-file-hook'
-             ;; because the latter is triggered too late (after the file has
-             ;; opened and modes are all set up).
-             (advice-add 'after-find-file :before fn '((depth . -101))))
-            ((add-hook hook fn -101)))
-      fn)))
-
-;; Produce more helpful (and visible) error messages from errors emitted from
-;; hooks (particularly mode hooks, that usually go unnoticed otherwise.
-(advice-add #'run-hooks :override #'c/run-hooks)
-
-(defvar c/first-input-hook nil
-  "Transient hooks run before the first user input.")
-(put 'c/first-input-hook 'permanent-local t)
-
-(defvar c/first-file-hook nil
-  "Transient hooks run before the first interactively opened file.")
-(put 'c/first-file-hook 'permanent-local t)
-
-(defvar c/first-buffer-hook nil
-  "Transient hooks run before the first interactively opened buffer.")
-(put 'c/first-buffer-hook 'permanent-local t)
-
-(defvar c/switch-buffer-hook nil
-  "A list of hooks run after changing the current buffer.")
-
-(defun c/run-switch-buffer-hooks-h (&optional _)
-  (let ((gc-cons-threshold most-positive-fixnum)
-        (inhibit-redisplay t))
-    (run-hooks 'c/switch-buffer-hook)))
-
-(defun c/init-switch-buffer-hook (&optional _)
-  "Initialize user interface by applying its hooks.
-These should be done as late as possible, as to avoid/minimize prematurely
-triggering hooks during startup."
-
-  (c/run-hook-on 'c/first-buffer-hook '(find-file-hook c/switch-buffer-hook))
-
-  ;; Only run this once
-  (remove-hook 'window-buffer-change-functions #'c/init-switch-buffer-hook))
-
-;; Initialize `c/switch-buffer-hook'
-(add-hook 'window-buffer-change-functions #'c/run-switch-buffer-hooks-h)
-;; `window-buffer-change-functions' doesn't trigger for files visited via the server.
-(add-hook 'server-visit-hook #'c/run-switch-buffer-hooks-h)
-
-(unless noninteractive
-  ;; Initialize UI as late as possible. `window-buffer-change-functions' runs
-  ;; once, when the scratch/dashboard buffer is first displayed.
-  (add-hook 'window-buffer-change-functions #'c/init-switch-buffer-hook 99)
-  (c/run-hook-on 'c/first-input-hook '(pre-command-hook))
-  (c/run-hook-on 'c/first-file-hook '(find-file-hook dired-initial-position-hook)))
-#+end_src
 ** Misc
 
 #+begin_src emacs-lisp
@@ -170,11 +20,7 @@ e.g. Fri Jan 07 2022"
 
 (global-set-key (kbd "C-x C-d") 'c/insert-log-date)
 #+end_src
-
 * Initial packages
-
-The two packages are the first to load in the configuration
-
 ** Leader Key
 
 #+begin_src emacs-lisp
@@ -208,6 +54,7 @@ The two packages are the first to load in the configuration
   (leader-key-set
    "a g" #'gptel-menu
    "b b" #'consult-buffer
+   "b B" #'switch-to-buffer
    "h k" #'describe-key
    "h v" #'describe-variable
    "h f" #'describe-function
@@ -244,13 +91,10 @@ and =etc= subdirectories so that they can be included in =.gitignore=
   :ensure (:wait t))
 #+end_src
 
-* LLM Chat
-
 ** gptel
 
 #+begin_src emacs-lisp
 (use-package gptel
-  :defer t
   :commands (gptel gptel-menu gptel-send gptel-request)
   :config
   (defun ms/load-anthropic-key ()
@@ -348,13 +192,7 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 
 * Package Management
 
-** Use Package
-
-Install packages by default when configured with use-package.
-
-#+begin_src emacs-lisp
-(setq use-package-always-ensure t)
-#+end_src
+** Use Feature Macro
 
 Macro to use to configure built-in features, rather than packages that do not need to be installed
 
@@ -368,12 +206,11 @@ Macro to use to configure built-in features, rather than packages that do not ne
 #+end_src
 
 * Base Settings
-
 ** General
 
 #+begin_src emacs-lisp
-  (setq initial-buffer-choice
-    (lambda () (get-buffer "*Messages*")))
+;; (setq initial-buffer-choice
+;;   (lambda () (get-buffer "*Messages*")))
 ;:(setq initial-buffer-choice "~/code/personal/emacs-configuration-example/config.org")
   (setq create-lock-files nil)
 #+end_src
@@ -444,12 +281,12 @@ Do not allow the cursor in the minibuffer prompt.
 
 (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
 #+end_src
-
 ** Save History
+
 
 #+begin_src emacs-lisp
 (use-feature savehist
-  :init
+  :config
   (savehist-mode))
 #+end_src
 
@@ -499,25 +336,27 @@ generate the filenames. This is taken from Doom Emacs.
 #+end_src
 
 * Evil
-
 ** Evil
 
 #+begin_src emacs-lisp
 (use-package evil
   :hook (c/first-input-hook . evil-mode)
+  :init
+  (setq evil-want-keybinding nil
+        evil-want-integration t
+        evil-want-C-u-scroll t
+        evil-want-C-d-scroll t
+        evil-want-C-h-delete t
+        evil-disable-insert-state-bindings t
+        evil-respect-visual-line-mode t)
+
   :bind (:map evil-normal-state-map
               ("-" . dired-jump)
               ("C-h" . 'windmove-left)
               ("C-j" . 'windmove-down)
               ("C-k" . 'windmove-up)
               ("C-l" . 'windmove-right))
-  :init
-  (setq evil-want-keybinding nil
-        evil-want-C-u-scroll t
-        evil-want-C-d-scroll t
-        evil-want-C-h-delete t
-        evil-disable-insert-state-bindings t
-        evil-respect-visual-line-mode t)
+
   :config
   (customize-set-variable 'evil-undo-system 'undo-redo))
 #+end_src
@@ -546,7 +385,7 @@ generate the filenames. This is taken from Doom Emacs.
 
 #+begin_src emacs-lisp
 (use-package evil-collection
-  :after magit
+  :after (magit dired)
   :init
   (defvar evil-collection-magit-use-z-for-folds t)
 
@@ -575,11 +414,12 @@ generate the filenames. This is taken from Doom Emacs.
    ([remap comment-line] . #'evilnc-comment-or-uncomment-lines)))
 #+end_src
 * User Interface
-
 ** Nano Theme
 
 #+begin_src emacs-lisp
-(use-package memoize)
+(use-package memoize
+  :commands (memoize))
+
 (use-package nano-theme
   :ensure (nano-theme :host github :repo "aaronjensen/nano-theme" :protocol ssh)
   :config
@@ -617,7 +457,9 @@ generate the filenames. This is taken from Doom Emacs.
   (custom-theme-set-faces
    'user
    '(variable-pitch ((t (:family "SF Pro" :height 150 :weight normal))))
+   ;; '(variable-pitch ((t (:family "Fira Sans" :height 150 :weight normal))))
    '(vundo-default ((t (:family "Iosevka SS04"))))))
+
 #+end_src
 
 ** Nano Modeline
@@ -674,6 +516,25 @@ using the given FACE-PREFIX as the default."
                                                           (0.0 . right-margin)
                                                           ,(length right))))
                 right))))
+
+  (defun c/shorten-directory-path (path threshold)
+    "Shorten a directory PATH by reducing the earlier path parts to a single letter if the PATH goes past the THRESHOLD, but never shorten the last part of the path."
+    (let* ((path (abbreviate-file-name path))
+           (parts (split-string path "/"))
+           (shortened-parts))
+      (while parts
+        (let ((part (car parts)))
+          (if (or (not (cdr parts))
+                  (< (length (string-join (append parts shortened-parts) "/"))
+                     threshold))
+              (push part shortened-parts)
+            (push (if (zerop (length part))
+                      part
+                    (substring part 0 1))
+                  shortened-parts)))
+        (setq parts (cdr parts)))
+
+      (string-join (reverse shortened-parts) "/")))
 
   (defun c/nano-modeline-project-root ()
     "Return the current project name or nil."
@@ -762,7 +623,13 @@ using the given FACE-PREFIX as the default."
                (c/nano-modeline-buffer-name)
                (c/nano-modeline-project))
              '((nano-modeline-cursor-position))
-             default))
+             default)
+
+    ;; Work around Emacs limiation with header-line face introduced in Emacs 31
+    ;; that prevents remapping from working properly. If nano-modeline stops
+    ;; remapping, this can be removed - Aaron, Thu Dec 5 2024
+    (face-remap-set-base 'header-line-active 'nano-modeline--empty-face)
+    (face-remap-set-base 'header-line-inactive 'nano-modeline--empty-face))
 
   (defun c/nano-modeline-text-mode (&optional default)
     "Nano line for text mode. Can be made DEFAULT mode."
@@ -772,7 +639,13 @@ using the given FACE-PREFIX as the default."
                (c/nano-modeline-buffer-name)
                (c/nano-modeline-project))
              '((nano-modeline-cursor-position))
-             default))
+             default)
+
+    ;; Work around Emacs limiation with header-line face introduced in Emacs 31
+    ;; that prevents remapping from working properly. If nano-modeline stops
+    ;; remapping, this can be removed - Aaron, Thu Dec 5 2024
+    (face-remap-set-base 'header-line-active 'nano-modeline--empty-face)
+    (face-remap-set-base 'header-line-inactive 'nano-modeline--empty-face))
 
   (defface c/nano-modeline-name-active-face
     '((t :weight semibold
@@ -908,21 +781,6 @@ Only if the switched to buffer is not of that project."
       (tab-bar-switch-to-tab ".emacs.d")
       (find-file-existing (concat user-emacs-directory "config.org"))))
 
-  ;; (defvar org-agenda-window-setup)
-  ;; (defun c/tab-org-agenda (&optional arg)
-  ;;   "Show my custom agenda and refresh it first chance we get."
-  ;;   (interactive "P")
-  ;;   (let ((tab-bar-new-tab-choice "*scratch*"))
-  ;;     (tab-bar-switch-to-tab "@agenda"))
-  ;;   (tab-bar-move-tab-to 0)
-  ;;   (if-let* ((window (get-buffer-window "*Org Agenda( )*")))
-  ;;       (select-window window)
-  ;;     (let ((org-agenda-window-setup 'only-window))
-  ;;       (org-agenda arg " ")))
-  ;;   (delete-other-windows)
-  ;;   (let ((inhibit-message t))
-  ;;     (org-agenda-redo)))
-
   :config
   (setq tab-bar-show t
         tab-bar-new-tab-choice t
@@ -958,7 +816,7 @@ The default tab-bar name uses the buffer name."
 (use-package modern-tab-bar
   :after tab-bar
   :ensure (modern-tab-bar :host github :repo "aaronjensen/emacs-modern-tab-bar" :protocol ssh)
-  :init
+  :config
   (modern-tab-bar-mode))
 #+end_src
 
@@ -973,17 +831,14 @@ The default tab-bar name uses the buffer name."
 #+begin_src emacs-lisp
 (use-package vertico
   :hook (c/first-input-hook . vertico-mode))
-  ;; :config
-  ;; (vertico-mode))
 #+end_src
 
 ** Completion At Point
-
 *** Additional Completion-at-Point Functions (cape)
 
 #+begin_src emacs-lisp
 (use-package cape
-  :hook ((completion-at-point-functions . cape-elisp-block))
+  :hook (completion-at-point-functions . cape-elisp-block)
   :config
   (setq cape-dabbrev-check-other-buffers nil))
 #+end_src
@@ -993,6 +848,7 @@ The default tab-bar name uses the buffer name."
 #+begin_src emacs-lisp
 (use-package ripgrep-capf
   :after cape
+  :commands (ripgrep-capf)
   :ensure (:host github :repo "aaronjensen/ripgrep-capf" :protocol ssh)
   :config
   (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
@@ -1002,6 +858,7 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package corfu
+  :hook (c/first-buffer-hook . corfu-history-mode)
   :bind
   (:map corfu-map
         ("TAB" . corfu-next)
@@ -1049,6 +906,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package orderless
+  :defer t
   :config
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
@@ -1059,20 +917,19 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package marginalia
+  :hook (c/first-input-hook . marginalia-mode)
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
   ;; available in the *Completions* buffer, add it to the
   ;; `completion-list-mode-map'.
   :bind (:map minibuffer-local-map
-              ("M-A" . marginalia-cycle))
-
-  :config
-  (marginalia-mode))
+              ("M-A" . marginalia-cycle)))
 #+end_src
 
 ** Miniframe
 
 #+begin_src emacs-lisp
 (use-package mini-frame
+  :hook (c/first-input-hook . mini-frame-mode)
   :config
   (custom-set-variables
    '(mini-frame-show-parameters
@@ -1082,20 +939,18 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
        (height . 5)
        (left-fringe . 12)
        (right-fringe . 12)
-                                        ;(top-fringe . 12)
-                                        ;(bottom-fringe .12)
        (child-frame-border-width . 1)
        (internal-border-width . 1)))
    '(mini-frame-color-shift-step 7))
-  (setq mini-frame-internal-border-color "black")
-  (mini-frame-mode))
+   (setq mini-frame-internal-border-color "black"))
 #+end_src
 
 ** Minibuffer Actions Rooted in Keybindings (Embark)
 
 #+begin_src emacs-lisp
 (use-package embark
-  :after vertico
+  :after (vertico)
+  :commands (embark-export embark-act)
   :bind (:map
          vertico-map
          ("C-c C-o" . #'embark-export)
@@ -1124,20 +979,20 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 #+end_src
 
 * Text Editing
-
 ** Delete Trailing Whitespace
 
 #+begin_src emacs-lisp
 (use-package ws-butler
-  :hook (c/first-buffer-hook . ws-butler-global-mode))
+  :defer t
+  :hook (c/first-file-hook . ws-butler-global-mode))
 #+end_src
 
 ** Spell Checking (Flyspell)
 
 #+begin_src emacs-lisp
 (use-feature flyspell
+  :defer t
   :hook ((org-mode git-commit-mode markdown-mode) . flyspell-mode)
-
   :config
   (setq flyspell-issue-message-flag nil
         flyspell-issue-welcome-flag nil))
@@ -1147,11 +1002,27 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package wgrep
+  :defer 4
+  :commands (wgrep-change-to-wgrep-mode)
   :config
   (setq wgrep-auto-save-buffer t))
 #+end_src
 
 * Projects
+
+** DISABLED [[https://github.com/aurtzy/disproject][Disproject]]
+
+Transient menus for project.el
+
+#+begin_src emacs-lisp
+(use-package disproject
+  ;; Replace `project-prefix-map' with `disproject-dispatch'.
+  :bind ( :map ctl-x-map
+          ("p" . disproject-dispatch)))
+
+(leader-key-set
+ "p p" #'disproject-dispatch)
+#+end_src
 
 ** Utility Functions
 
@@ -1171,10 +1042,13 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 ** Tree View (Treemacs)
 
 #+begin_src emacs-lisp
-(use-package all-the-icons)
+(use-package all-the-icons
+  :defer t)
 
 (use-package treemacs
   :bind ("s-b" . #'treemacs)
+  :commands (treemacs)
+  :hook (treemacs-mode-hook . c/treemacs-line-spacing)
   :config
   (defun c/treemacs-line-spacing ()
     "Disable line spacing for treemacs."
@@ -1236,7 +1110,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 #+begin_src emacs-lisp
 (use-package tabspaces
   :after consult
-
   :init
   (setq tabspaces-session-file (no-littering-expand-var-file-name "tabsession.el")
         tabspaces-project-switch-commands #'project-find-file)
@@ -1289,10 +1162,11 @@ Two space indentation by default.
 
 #+begin_src emacs-lisp
 (use-package markdown-mode
-  :config
-  (add-hook 'markdown-mode-hook #'visual-line-mode)
-  (add-hook 'markdown-mode-hook #'visual-wrap-prefix-mode)
+  :commands (markdown-mode)
+  :hook ((markdown-mode-hook . visual-line-mode)
+         (markdown-mode-hook . visual-wrap-prefix-mode))
 
+  :config
   (setq markdown-list-indent-width 2))
 #+end_src
 
@@ -1300,6 +1174,7 @@ Two space indentation by default.
 
 #+begin_src emacs-lisp
 (use-feature ruby-mode
+  :commands (ruby-mode)
   :hook (ruby-mode . corfu-mode)
   :capf capf-dabbrev-ripgrep
   :config
@@ -1316,21 +1191,10 @@ Two space indentation by default.
 
 #+begin_src emacs-lisp
 (use-package magit
-  :commands (magit-status))
-#+end_src
-
-Install latest version of transient, as the version included in Emacs is not recent enough.
-
-#+begin_src emacs-lisp
-(use-package transient)
-#+end_src
-
-Start git commit in insert mode
-
-#+begin_src emacs-lisp
-(use-package git-commit
-  :after magit
+  :commands (magit-status)
   :config
+  (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
+  (setq magit-bury-buffer-function 'magit-restore-window-configuration)
   (add-hook 'git-commit-setup-hook
             (defun +vc-start-in-insert-state-maybe-h ()
               "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
@@ -1340,14 +1204,38 @@ Start git commit in insert mode
                 (evil-insert-state)))))
 #+end_src
 
+Install latest version of transient, as the version included in Emacs is not recent enough.
+
+#+begin_src emacs-lisp
+(use-package transient
+  :after (magit))
+#+end_src
+
+Start git commit in insert mode
+
+#+begin_src emacs-lisp
+;; (use-package git-commit
+;;   :after magit
+;;   :hook (c/first-file . global-git-commit-mode)
+;;   :config
+;;   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
+;;   (setq magit-bury-buffer-function 'magit-restore-window-configuration)
+;;   (add-hook 'git-commit-setup-hook
+;;             (defun +vc-start-in-insert-state-maybe-h ()
+;;               "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
+;;               (when (and (bound-and-true-p evil-local-mode)
+;;                          (not (evil-emacs-state-p))
+;;                          (bobp) (eolp))
+;;                 (evil-insert-state)))))
+#+end_src
+
 * Assistance
 
 ** Which Key
 
 #+begin_src emacs-lisp
 (use-feature which-key
-  :config
-  (which-key-mode))
+  :hook (c/first-input-hook . which-key-mode))
 #+end_src
 
 ** Helpful
@@ -1366,7 +1254,6 @@ Start git commit in insert mode
 #+end_src
 
 * Undo
-
 ** Vundo
 
 #+begin_src emacs-lisp
@@ -1378,20 +1265,35 @@ Start git commit in insert mode
 
 #+begin_src emacs-lisp
 (use-package undo-fu-session
-  :hook (c/first-input-hook . undo-fu-session-global-mode)
+  :hook (c/first-file-hook .  undo-fu-session-global-mode)
   :config
   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 #+end_src
 
 * Major Modes
-
 ** Org
 
 #+begin_src emacs-lisp
-(use-feature org-mode
-  :hook (org-mode . corfu-mode)
+(use-feature org
+  :hook ((org-mode . corfu-mode)
+         (org-mode . visual-line-mode))
   :init
-  (setq org-edit-src-content-indentation 0))
+  (setq org-edit-src-content-indentation 0
+        org-hide-emphasis-markers t))
+
+;; (use-package org-bullets
+;;   :hook (org-mode . org-bullets-mode))
+
+(use-package org-superstar
+  :hook (org-mode . org-superstar-mode)
+  :config
+  (setq org-superstar-leading-bullet ?\s
+        org-superstar-leading-fallback ?\s
+        org-superstar-configure-like-org-bullets t
+        org-hide-leading-stars nil))
+
+(use-package org-appear
+  :hook (org-mode . org-appear-mode))
 #+end_src
 
 * Minor Modes
@@ -1400,7 +1302,7 @@ Start git commit in insert mode
 
 #+begin_src emacs-lisp
 (use-package smartparens
-  :config (smartparens-global-mode))
+  :hook (c/first-buffer-hook . smartparens-global-mode))
 
 (use-package rainbow-delimiters
   :hook ((org-mode . rainbow-delimiters-mode)
@@ -1442,7 +1344,7 @@ Start git commit in insert mode
 
 #+begin_src emacs-lisp
 (use-package transient-showcase
-  :ensure (transient-showcase :host github :repo "positron-solutions/transient-showcase" :protocol ssh)
+  :ensure (transient-showcase :host github :repo "positron-solutions/transient-showcase" :protocol ssh))
 #+end_src
 
 ** DISABLED pgmacs
@@ -1455,7 +1357,7 @@ Start git commit in insert mode
 
 #+end_src
 
-** message-db-viewer
+** DISABLED message-db-viewer
 
 #+begin_src emacs-lisp
 (use-package message-db
@@ -1464,7 +1366,7 @@ Start git commit in insert mode
 * Startup Time
 
 #+begin_src emacs-lisp
-(add-hook 'after-init-hook
+(add-hook 'elpaca-after-init-hook
           (lambda ()
             (let ((inhibit-message t))
               (message "Emacs init time: %s" (emacs-init-time)))))

@@ -1171,13 +1171,14 @@ Two space indentation by default.
   :config
   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
   (setq magit-bury-buffer-function 'magit-restore-window-configuration)
+
   (add-hook 'git-commit-setup-hook
-            (defun +vc-start-in-insert-state-maybe-h ()
-              "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
-              (when (and (bound-and-true-p evil-local-mode)
-                         (not (evil-emacs-state-p))
-                         (bobp) (eolp))
-                (evil-insert-state)))))
+             (defun +vc-start-in-insert-state-maybe-h ()
+               "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
+               (when (and (bound-and-true-p evil-local-mode)
+                          (not (evil-emacs-state-p))
+                          (bobp) (eolp))
+                 (evil-insert-state)))))
 #+end_src
 
 Install latest version of transient, as the version included in Emacs is not recent enough.
@@ -1185,24 +1186,6 @@ Install latest version of transient, as the version included in Emacs is not rec
 #+begin_src emacs-lisp
 (use-package transient
   :after (magit))
-#+end_src
-
-Start git commit in insert mode
-
-#+begin_src emacs-lisp
-;; (use-package git-commit
-;;   :after magit
-;;   :hook (c/first-file . global-git-commit-mode)
-;;   :config
-;;   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
-;;   (setq magit-bury-buffer-function 'magit-restore-window-configuration)
-;;   (add-hook 'git-commit-setup-hook
-;;             (defun +vc-start-in-insert-state-maybe-h ()
-;;               "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
-;;               (when (and (bound-and-true-p evil-local-mode)
-;;                          (not (evil-emacs-state-p))
-;;                          (bobp) (eolp))
-;;                 (evil-insert-state)))))
 #+end_src
 
 * Assistance

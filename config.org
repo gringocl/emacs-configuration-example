@@ -371,32 +371,21 @@ Put backup files and auto-save files in var directory, rather than alongside the
   :hook (pre-command . evil-escape-mode)
   :init
   (setq evil-escape-key-sequence "jk"
-        evil-escape-delay 0.2)
+        evil-escape-delay 0.2
+        evil-escape-excluded-major-modes '(magit-status-mode))
   (evil-define-key* '(insert replace visual operator) 'global "\C-g" #'evil-escape))
 #+end_src
 
 ** Evil Collection
 
 #+begin_src emacs-lisp
-(use-package evil-collection
-  :after (magit dired)
-  :init
-  (defvar evil-collection-magit-use-z-for-folds t)
+  (use-package evil-collection
+    :after (evil dired magit)
+    :init
+    (defvar evil-collection-magit-use-z-for-folds t)
 
-  :config
-  (evil-collection-init '(dired magit))
-  ;; q is enough; ESC is way too easy for a vimmer to accidentally press,
-  ;; especially when traversing modes in magit buffers.
-  (evil-define-key* 'normal magit-status-mode-map [escape] nil)
-
-  ;; A more intuitive behavior for TAB in magit buffers:
-  (define-key 'normal
-    (magit-status-mode-map
-     magit-stash-mode-map
-     magit-revision-mode-map
-     magit-process-mode-map
-     magit-diff-mode-map)
-    [tab] #'magit-section-toggle))
+    :config
+    (evil-collection-init))
 #+end_src
 
 ** Evil Nerd Comment

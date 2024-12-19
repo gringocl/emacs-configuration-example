@@ -191,7 +191,6 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
 #+end_src
 
 * Package Management
-
 ** Use Feature Macro
 
 Macro to use to configure built-in features, rather than packages that do not need to be installed
@@ -283,7 +282,6 @@ Do not allow the cursor in the minibuffer prompt.
 #+end_src
 ** Save History
 
-
 #+begin_src emacs-lisp
 (use-feature savehist
   :config
@@ -291,10 +289,8 @@ Do not allow the cursor in the minibuffer prompt.
 #+end_src
 
 ** Backup and Auto-Save
-
-Put backup files and auto-save files in var directory, rather than alongside the
-original files.
-
+   
+Put backup files and auto-save files in var directory, rather than alongside the original files.
 #+begin_src emacs-lisp
 (setq backup-directory-alist `(("." . ,(no-littering-expand-var-file-name "backup/"))))
 (add-hook 'elpaca-after-init-hook
@@ -302,10 +298,7 @@ original files.
             (setq auto-save-list-file-prefix (no-littering-expand-var-file-name "auto-save/sessions/")
                   auto-save-file-name-transforms `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))))
 #+end_src
-
-When paths are too long, there can be errors when auto-save and backup filenames
-are generated. This uses a consistent hash, rather than the full path to
-generate the filenames. This is taken from Doom Emacs.
+   When paths are too long, there can be errors when auto-save and backup filenames are generated. This uses a consistent hash, rather than the full path to generate the filenames. This is taken from Doom Emacs.
 #+begin_src emacs-lisp
 (defun c/make-auto-save-file-name-hashed (fn)
   "Compress the auto-save file name so paths don't get too long."
@@ -1137,9 +1130,7 @@ Transient menus for project.el
 #+end_src
 
 * File Types
-
 ** Defaults
-
 *** Indentation
 
 Two space indentation by default.
@@ -1186,7 +1177,6 @@ Two space indentation by default.
 #+end_src
 
 * Version Control
-
 ** Magit
 
 #+begin_src emacs-lisp

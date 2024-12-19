@@ -886,7 +886,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package orderless
-  :defer t
   :config
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil

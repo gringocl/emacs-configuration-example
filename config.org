@@ -400,9 +400,6 @@ Put backup files and auto-save files in var directory, rather than alongside the
 ** Nano Theme
 
 #+begin_src emacs-lisp
-(use-package memoize
-  :commands (memoize))
-
 (use-package nano-theme
   :ensure (nano-theme :host github :repo "aaronjensen/nano-theme" :protocol ssh)
   :config
@@ -436,21 +433,21 @@ Put backup files and auto-save files in var directory, rather than alongside the
    )
 
   (load-theme 'nano t)
-
+ 
   (custom-theme-set-faces
    'user
    '(variable-pitch ((t (:family "SF Pro" :height 150 :weight normal))))
-   ;; '(variable-pitch ((t (:family "Fira Sans" :height 150 :weight normal))))
    '(vundo-default ((t (:family "Iosevka SS04"))))))
-
 #+end_src
 
 ** Nano Modeline
 
 #+begin_src emacs-lisp
+(use-package memoize
+  :commands (memoize))
+
 (use-package nano-modeline
   :ensure (nano-modeline :host github :repo "rougier/nano-modeline")
-  :demand t
   :init
   (setq-default mode-line-format nil)
   (add-hook 'after-change-major-mode-hook #'c/nano-modeline)

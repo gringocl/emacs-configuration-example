@@ -333,7 +333,7 @@ Put backup files and auto-save files in var directory, rather than alongside the
 
 #+begin_src emacs-lisp
 (use-package evil
-  :hook (c/first-input-hook . evil-mode)
+  :demand t
   :init
   (setq evil-want-keybinding nil
         evil-want-integration t
@@ -351,6 +351,7 @@ Put backup files and auto-save files in var directory, rather than alongside the
               ("C-l" . 'windmove-right))
 
   :config
+  (evil-mode 1)
   (customize-set-variable 'evil-undo-system 'undo-redo))
 #+end_src
 

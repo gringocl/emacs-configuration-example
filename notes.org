@@ -1,7 +1,4 @@
-* VC Package Installation
-
-#+begin_src emacs-lisp
-(use-package modern-tab-bar
-  :vc (:url "https://github.com/aaronjensen/emacs-modern-tab-bar"
-       :rev :newest))
-#+end_src
+* To Dos
+- [ ] embark in the minibuffer, rather than in a new frame
+- [ ] Review leader commands in doom setup, i.e. window, buffer, file commands and copy over
+*

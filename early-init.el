@@ -90,5 +90,8 @@
 
 ;; Disable the built-in package manager because Elpaca is used instead
 (setq package-enable-at-startup nil)
+;; (setq use-package-verbose t)
+;; (setq use-package-minimum-reported-time 0.0000001)
+;; (setq use-package-compute-statistics t)
 
 (c/start-section "void" "Between early-init and init")

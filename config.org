@@ -875,7 +875,9 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :hook (c/first-input-hook . vertico-mode))
+  :hook (c/first-input-hook . vertico-mode)
+  :config
+  (vertico-multiform-mode))
 #+end_src
 
 ** Completion At Point

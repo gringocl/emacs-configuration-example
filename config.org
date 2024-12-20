@@ -20,6 +20,38 @@ e.g. Fri Jan 07 2022"
 
 (global-set-key (kbd "C-x C-d") 'c/insert-log-date)
 #+end_src
+** `yank-buffer-path`
+
+#+begin_src emacs-lisp
+(defun c/yank-buffer-path (&optional root)
+  "Copy the current buffer's path to the kill ring."
+  (interactive)
+  (if-let (filename (or (buffer-file-name (buffer-base-buffer))
+                        (bound-and-true-p list-buffers-directory)))
+      (let ((path (abbreviate-file-name
+                   (if root
+                       (file-relative-name filename root)
+                     filename))))
+        (kill-new path)
+        (if (string= path (car kill-ring))
+            (message "Copied path: %s" path)
+          (user-error "Couldn't copy filename in current buffer")))
+    (error "Couldn't find filename in current buffer")))
+#+end_src
+
+** `yank-buffer-path-relative-to-project`
+
+#+begin_src emacs-lisp
+(defun c/yank-buffer-path-relative-to-project (&optional include-root)
+  "Copy the current buffer's path to the kill ring.
+With non-nil prefix INCLUDE-ROOT, also include the project's root."
+  (interactive "P")
+  (c/yank-buffer-path
+   (if include-root
+       (file-name-directory (directory-file-name (project-root (project-current))))
+     (project-root (project-current)))))
+#+end_src
+
 * Initial Packages
 ** GCMH
 
@@ -68,6 +100,9 @@ e.g. Fri Jan 07 2022"
    "g g" #'magit-status
    "f f" #'project-find-file
    "f F" #'find-file
+   "f y" #'c/yank-buffer-path-relative-to-project
+   "f Y" #'c/yank-buffer-path
+
    "x" #'execute-extended-command
    "u" #'universal-argument
    ";" #'evilnc-comment-operator

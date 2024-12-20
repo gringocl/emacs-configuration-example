@@ -92,25 +92,49 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
 
   (leader-key-set
    "a g" #'gptel-menu
+
+   ;; Buffer
    "b b" #'consult-buffer
+   "b d" #'kill-current-buffer
+   "b k" #'kill-current-buffer
    "b B" #'switch-to-buffer
+   "b r" #'revert-buffer
+
+   ;; Help
    "h k" #'describe-key
    "h v" #'describe-variable
    "h f" #'describe-function
+
+   ;; Git
    "g g" #'magit-status
+   "g B" #'magit-blame-addition
+
+   ;; Files
    "f f" #'project-find-file
    "f F" #'find-file
    "f y" #'c/yank-buffer-path-relative-to-project
    "f Y" #'c/yank-buffer-path
 
+   ;; Primary commands
    "x" #'execute-extended-command
    "u" #'universal-argument
    ";" #'evilnc-comment-operator
    "/" #'consult-ripgrep
+   "*" #'c/search-project-for-symbol
    "TAB" #'evil-switch-to-windows-last-buffer
+
    "e l" #'find-library
+
    "q r" #'restart-emacs
+   "q q" #'save-buffers-kill-emacs
+
    "s u" #'vundo
+
+   ;; Window
+   "w v" #'evil-window-vsplit
+   "w h" #'evil-window-split
+
+   ;; Toggle
    "T w" #'visual-line-mode))
 #+end_src
 
@@ -231,7 +255,6 @@ If `DEVICE-NAME' is provided, it will be used instead of prompting the user."
       (setq whisper--ffmpeg-input-device (format ":%s" rk/default-audio-device)))))
 
 #+end_src
-
 * Package Management
 ** Use Feature Macro
 
@@ -475,7 +498,7 @@ Put backup files and auto-save files in var directory, rather than alongside the
    )
 
   (load-theme 'nano t)
- 
+
   (custom-theme-set-faces
    'user
    '(variable-pitch ((t (:family "SF Pro" :height 150 :weight normal))))

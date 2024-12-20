@@ -901,7 +901,7 @@ The default tab-bar name uses the buffer name."
   (defalias 'capf-dabbrev-ripgrep (cape-capf-super #'cape-dabbrev #'ripgrep-capf)))
 #+end_src
 
-*** Inline Completion
+*** Inline Completion (Corfu)
 
 #+begin_src emacs-lisp
 (use-package corfu
@@ -934,9 +934,7 @@ The default tab-bar name uses the buffer name."
   (setq
    corfu-auto t
    corfu-auto-prefix 2
-   corfu-auto-delay 0.1)
-  :config
-  (corfu-history-mode))
+   corfu-auto-delay 0.1))
 #+end_src
 
 ** Consult

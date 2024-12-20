@@ -1036,7 +1036,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package ws-butler
-  :defer t
   :hook (c/first-file-hook . ws-butler-global-mode))
 #+end_src
 
@@ -1044,7 +1043,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-feature flyspell
-  :defer t
   :hook ((org-mode git-commit-mode markdown-mode) . flyspell-mode)
   :config
   (setq flyspell-issue-message-flag nil
@@ -1055,7 +1053,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package wgrep
-  :defer 4
   :commands (wgrep-change-to-wgrep-mode)
   :config
   (setq wgrep-auto-save-buffer t))
@@ -1095,8 +1092,7 @@ Transient menus for project.el
 ** Tree View (Treemacs)
 
 #+begin_src emacs-lisp
-(use-package all-the-icons
-  :defer t)
+(use-package all-the-icons)
 
 (use-package treemacs
   :bind ("s-b" . #'treemacs)

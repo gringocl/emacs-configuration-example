@@ -121,7 +121,7 @@ Meant to be used with `run-hook-wrapped'."
             (let ((inhibit-message t)
                   (elapsed-time (* 1000 (float-time (time-subtract (current-time) time)))))
               (when (> elapsed-time 2)
-                (message "%S • %4dms • %S" c/time-hooks elapsed-time hook))))
+                (message "%s • %4dms • %S" c/time-hooks elapsed-time hook))))
         (funcall hook))
     (error
      (signal 'c/hook-error (list hook e))))
@@ -224,6 +224,53 @@ triggering hooks during startup."
   (add-hook 'window-buffer-change-functions #'c/init-switch-buffer-hook 99)
   (c/run-hook-on 'c/first-input-hook '(pre-command-hook))
   (c/run-hook-on 'c/first-file-hook '(find-file-hook dired-initial-position-hook)))
+
+(defvar c/eager-load-packages nil)
+
+(defun c/eager-load-packages ()
+  (while (and c/eager-load-packages
+              (not (input-pending-p)))
+    (condition-case nil
+        (require (pop c/eager-load-packages) nil t)
+      (error nil)))
+
+  (if c/eager-load-packages
+      (c/eager-load-packages-idle)
+    ;; Once everything has loaded, start gcmh if it hasn't started yet
+    (gcmh-mode)))
+
+(defun c/eager-load-packages-idle ()
+  (run-with-idle-timer 0.3 nil #'c/eager-load-packages))
+
+(defun c/eager-load-packages-start ()
+  (setq c/eager-load-packages
+        (reverse (mapcar #'car (elpaca--queued))))
+  (c/eager-load-packages-idle))
+
+(add-hook 'elpaca-after-init-hook #'c/eager-load-packages-start)
+
+(defvar c/eager-hook nil)
+
+(defmacro c/eager-run-hook (hook)
+  `(while (and (not (input-pending-p))
+               ,hook)
+     (let ((first-hook (car ,hook))
+           (remaining-hooks (cdr ,hook))
+           (c/time-hooks (intern (format " eager • %s" ',hook))))
+       (add-hook 'c/eager-hook first-hook)
+       (run-hook-wrapped 'c/eager-hook #'c/run-hook)
+       (setq ,hook remaining-hooks
+             c/eager-hook nil))))
+
+(defun c/eager-run-hooks ()
+  (c/eager-run-hook c/first-input-hook)
+  (c/eager-run-hook c/first-buffer-hook)
+  (c/eager-run-hook c/first-file-hook))
+
+(defun c/eager-run-hooks-later ()
+  (run-with-timer 0 nil #'c/eager-run-hooks))
+
+(add-hook 'elpaca-after-init-hook #'c/eager-run-hooks-later)
 
 (c/start-section "init" "Load Config")
 

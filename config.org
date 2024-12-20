@@ -1059,7 +1059,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 #+end_src
 
 * Projects
-
 ** DISABLED [[https://github.com/aurtzy/disproject][Disproject]]
 
 Transient menus for project.el
@@ -1270,7 +1269,6 @@ Install latest version of transient, as the version included in Emacs is not rec
 #+end_src
 
 * Assistance
-
 ** Which Key
 
 #+begin_src emacs-lisp
@@ -1343,7 +1341,6 @@ Install latest version of transient, as the version included in Emacs is not rec
 #+end_src
 
 * Minor Modes
-
 ** Parens
 
 #+begin_src emacs-lisp
@@ -1366,7 +1363,6 @@ Install latest version of transient, as the version included in Emacs is not rec
 #+end_src
 
 * Terminal
-
 ** Terminal Emulator (vterm)
 
 #+begin_src emacs-lisp
@@ -1387,7 +1383,6 @@ Install latest version of transient, as the version included in Emacs is not rec
 #+end_src
 
 * Test packages
-
 ** DISABLED Transient showcase
 
 #+begin_src emacs-lisp

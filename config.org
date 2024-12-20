@@ -986,14 +986,17 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
        (child-frame-border-width . 1)
        (internal-border-width . 1)))
    '(mini-frame-color-shift-step 7))
-   (setq mini-frame-internal-border-color "black"))
+  (setq mini-frame-internal-border-color "black"
+        mini-frame-detach-on-hide nil
+        mini-frame-standalone 't
+        mini-frame-resize-min-height 3
+        mini-frame-ignore-commands (append mini-frame-ignore-commands '(evil-ex))))
 #+end_src
 
 ** Minibuffer Actions Rooted in Keybindings (Embark)
 
 #+begin_src emacs-lisp
 (use-package embark
-  :after (vertico)
   :commands (embark-export embark-act)
   :bind (:map
          vertico-map

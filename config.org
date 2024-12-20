@@ -8,7 +8,7 @@
 ** Snippets
 ** Imagine a way to keep automated test output in a buffer to utilize as library documentation, ie could be foldable, searchable?
 * Utility Functions
-** Misc
+** `insert-log-date`
 
 #+begin_src emacs-lisp
 (defun  c/insert-log-date ()

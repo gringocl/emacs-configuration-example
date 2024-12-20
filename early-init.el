@@ -1,13 +1,6 @@
 ;;; early-init.el -*- no-byte-compile: t; lexical-binding: t; -*-
 
-(defvar c/gc-cons-threshold (* 16 1024 1024)
-  "The value of `gc-cons-threshold' after Emacs startup.")
-
 (setq gc-cons-threshold most-positive-fixnum)
-
-(add-hook 'emacs-startup-hook
-          (lambda ()
-            (setq gc-cons-threshold c/gc-cons-threshold)))
 
 (defvar c/early-init-el-start-time (current-time) "Time when early-init.el was started")
 (defvar c/section-split-time c/early-init-el-start-time)

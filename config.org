@@ -20,7 +20,14 @@ e.g. Fri Jan 07 2022"
 
 (global-set-key (kbd "C-x C-d") 'c/insert-log-date)
 #+end_src
-* Initial packages
+* Initial Packages
+** GCMH
+
+#+begin_src emacs-lisp
+(use-package gcmh
+  :commands (gcmh-mode))
+#+end_src
+
 ** Leader Key
 
 #+begin_src emacs-lisp

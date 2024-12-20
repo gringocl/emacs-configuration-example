@@ -1169,12 +1169,11 @@ With prefix arg (C-u), prompt for a project directory to search in."
 #+begin_src emacs-lisp
 (use-package tabspaces
   :after consult
+  :hook (c/after-input-hook . tabspaces-mode)
+  :commands (tabspaces-mode)
   :init
   (setq tabspaces-session-file (no-littering-expand-var-file-name "tabsession.el")
         tabspaces-project-switch-commands #'project-find-file)
-
-  (tabspaces-mode)
-
   :config
   (consult-customize consult--source-buffer :hidden t :default nil)
 
@@ -1248,17 +1247,19 @@ Two space indentation by default.
 #+begin_src emacs-lisp
 (use-package magit
   :commands (magit-status)
+  :hook (magit-diff-mode-hook . (lambda ()
+                                  (setq truncate-lines nil)))
   :config
   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
   (setq magit-bury-buffer-function 'magit-restore-window-configuration)
 
   (add-hook 'git-commit-setup-hook
-             (defun +vc-start-in-insert-state-maybe-h ()
-               "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
-               (when (and (bound-and-true-p evil-local-mode)
-                          (not (evil-emacs-state-p))
-                          (bobp) (eolp))
-                 (evil-insert-state)))))
+            (defun +vc-start-in-insert-state-maybe-h ()
+              "Start git-commit-mode in insert state if in a blank commit message, otherwise in default state."
+              (when (and (bound-and-true-p evil-local-mode)
+                         (not (evil-emacs-state-p))
+                         (bobp) (eolp))
+                (evil-insert-state)))))
 #+end_src
 
 Install latest version of transient, as the version included in Emacs is not recent enough.
@@ -1334,6 +1335,12 @@ Install latest version of transient, as the version included in Emacs is not rec
 (use-package org-appear
   :hook (org-mode . org-appear-mode))
 #+end_src
+** Dired
+
+#+begin_src emacs-lisp
+(use-feature dired
+  :hook (dired-mode-hook. dired-hide-details-mode))
+#+end_src
 
 * Minor Modes
 
@@ -1354,6 +1361,8 @@ Install latest version of transient, as the version included in Emacs is not rec
 (setq display-line-numbers-type 't)  ; Options: 'relative, 't (absolute), 'visual
 (setq display-line-numbers-width 3)         ; Adjust width of line number display
 (setq display-line-numbers-grow-only t)     ; Prevent width from shrinking
+
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 #+end_src
 
 * Terminal

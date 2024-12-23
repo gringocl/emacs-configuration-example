@@ -462,6 +462,67 @@ Put backup files and auto-save files in var directory, rather than alongside the
    ([remap comment-line] . #'evilnc-comment-or-uncomment-lines)))
 #+end_src
 * User Interface
+** DISABLED General UX
+
+Copied this from `doom-ui.el`
+
+#+begin_src emacs-lisp
+(defun c/quit-p (&optional prompt)
+  "Prompt before quitting Emacs if any unsaved files exist."
+  (let ((modified-buffers (seq-filter #'buffer-modified-p (buffer-list))))
+    (or (null modified-buffers)
+        (yes-or-no-p (format "Quit with %d modified buffer(s)? "
+                            (length modified-buffers))))))
+;; A simple confirmation prompt when killing Emacs. But only prompt when there
+;; are real buffers open.
+(setq confirm-kill-emacs #'c/quit-p)
+
+(defun c/delete-frame-with-prompt ()
+  "Delete the current frame, but ask for confirmation if it isn't empty."
+  (interactive)
+  (if (cdr (frame-list))
+      (when (c/quit-p "Close frame?")
+        (delete-frame))
+    (save-buffers-kill-emacs)))
+;; Prompt for confirmation when deleting a non-empty frame; a last line of
+;; defense against accidental loss of work.
+(global-set-key [remap delete-frame] #'c/delete-frame-with-prompt)
+
+;;Don't prompt for confirmation when we create a new file or buffer (assume the
+;; user knows what they're doing).
+(setq confirm-nonexistent-file-or-buffer nil)
+
+(setq uniquify-buffer-name-style 'forward
+      ;; no beeping or blinking please
+      ring-bell-function #'ignore
+      visible-bell nil)
+#+end_src
+
+** Scrolling
+Copied this from `doom-ui.el`
+
+#+begin_src emacs-lisp
+;;; Scrolling
+(setq hscroll-margin 2
+      hscroll-step 1
+      ;; Emacs spends too much effort recentering the screen if you scroll the
+      ;; cursor more than N lines past window edges (where N is the settings of
+      ;; `scroll-conservatively'). This is especially slow in larger files
+      ;; during large-scale scrolling commands. If kept over 100, the window is
+      ;; never automatically recentered. The default (0) triggers this too
+      ;; aggressively, so I've set it to 10 to recenter if scrolling too far
+      ;; off-screen.
+      scroll-conservatively 10
+      scroll-margin 0
+      scroll-preserve-screen-position t
+      ;; Reduce cursor lag by a tiny bit by not auto-adjusting `window-vscroll'
+      ;; for tall lines.
+      auto-window-vscroll nil
+      ;; mouse
+      mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
+      mouse-wheel-scroll-amount-horizontal 2)
+#+end_src
+
 ** Nano Theme
 
 #+begin_src emacs-lisp

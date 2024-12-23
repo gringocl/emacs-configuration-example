@@ -1491,7 +1491,10 @@ Install latest version of transient, as the version included in Emacs is not rec
 
 #+begin_src emacs-lisp
 (use-package vterm-toggle
-  :bind (("s-i" . vterm-toggle)))
+  :bind (("s-i" . vterm-toggle))
+  :config
+  (setq vterm-toggle-scope 'project
+        vterm-toggle-project-root t))
 #+end_src
 
 * Test packages

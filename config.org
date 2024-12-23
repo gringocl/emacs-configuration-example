@@ -117,6 +117,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
 
    ;; Primary commands
    "x" #'execute-extended-command
+   "X" #'execute-extended-command-for-buffer
    "u" #'universal-argument
    ";" #'evilnc-comment-operator
    "/" #'consult-ripgrep
@@ -1422,6 +1423,7 @@ Install latest version of transient, as the version included in Emacs is not rec
 (use-package org-appear
   :hook (org-mode . org-appear-mode))
 #+end_src
+
 ** Dired
 
 #+begin_src emacs-lisp

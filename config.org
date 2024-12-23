@@ -785,6 +785,17 @@ using the given FACE-PREFIX as the default."
     (c/nano-modeline)))
 #+end_src
 
+** Nano SVG Mode
+
+#+begin_src emacs-lisp
+(use-package svg-tag-mode
+  :hook (org-mode . svg-tag-mode)
+  :config
+  (setq svg-tag-tags
+        '((":DISABLED:" . ((lambda (tag) (svg-tag-make "DISABLED"))))
+          ("DISABLED" . ((lambda (tag) (svg-tag-make "DISABLED")))))))
+#+end_src
+
 ** Font Size
 
 #+begin_src emacs-lisp

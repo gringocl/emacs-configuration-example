@@ -947,9 +947,17 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :hook (c/first-input-hook . vertico-mode)
+  :hook (c/first-input-hook . vertico-mode))
+
+(use-package vertico-posframe
+  :after vertico
   :config
-  (vertico-multiform-mode))
+  (setq vertico-posframe-parameters
+        '((left-fringe . 12)
+          (right-fringe . 12)))
+
+  (vertico-multiform-mode -1)
+  (vertico-posframe-mode 1))
 #+end_src
 
 ** Completion At Point
@@ -1041,30 +1049,6 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
               ("M-A" . marginalia-cycle)))
 #+end_src
 
-** Miniframe
-
-#+begin_src emacs-lisp
-(use-package mini-frame
-  :hook (c/first-input-hook . mini-frame-mode)
-  :config
-  (custom-set-variables
-   '(mini-frame-show-parameters
-     '((top . 0.4)
-       (width . 0.8)
-       (left . 0.5)
-       (height . 5)
-       (left-fringe . 12)
-       (right-fringe . 12)
-       (child-frame-border-width . 1)
-       (internal-border-width . 1)))
-   '(mini-frame-color-shift-step 7))
-  (setq mini-frame-internal-border-color "black"
-        ;; mini-frame-detach-on-hide nil
-        ;; mini-frame-standalone 't
-        ;; mini-frame-resize-min-height 3
-        mini-frame-ignore-commands (append mini-frame-ignore-commands '(evil-ex))))
-#+end_src
-
 ** Minibuffer Actions Rooted in Keybindings (Embark)
 
 #+begin_src emacs-lisp
@@ -1101,6 +1085,28 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
       (when (eq major-mode 'grep-mode)
         (wgrep-change-to-wgrep-mode))))
   (advice-add #'embark-consult-export-grep :after #'c/embark-export-grep-wgrep))
+#+end_src
+
+** DISABLED Miniframe
+Disabled this is favor of using vertico-posframe. embark was opening a new frame.
+
+#+begin_src emacs-lisp
+(use-package mini-frame
+  :hook (c/first-input-hook . mini-frame-mode)
+  :config
+  (custom-set-variables
+   '(mini-frame-show-parameters
+     '((top . 0.4)
+       (width . 0.8)
+       (left . 0.5)
+       (height . 5)
+       (left-fringe . 12)
+       (right-fringe . 12)
+       (child-frame-border-width . 1)
+       (internal-border-width . 1)))
+   '(mini-frame-color-shift-step 7))
+  (setq mini-frame-internal-border-color "black"
+        mini-frame-ignore-commands (append mini-frame-ignore-commands '(evil-ex embark-act))))
 #+end_src
 
 * Text Editing

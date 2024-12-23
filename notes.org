@@ -1,4 +1,7 @@
 * To Dos
-- [ ] embark in the minibuffer, rather than in a new frame
+- [x] Add org-capture to add to this notes file
+- [x] embark in the minibuffer, rather than in a new frame
 - [ ] Review leader commands in doom setup, i.e. window, buffer, file commands and copy over
-*
+- [ ] windmove left to treemacs
+- [ ] vterm project root aware
+- [ ] Stick the end of the buffer to the bottom of the window

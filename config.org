@@ -439,7 +439,7 @@ Put backup files and auto-save files in var directory, rather than alongside the
   :init
   (setq evil-escape-key-sequence "jk"
         evil-escape-delay 0.2
-        evil-escape-excluded-major-modes '(magit-status-mode))
+        evil-escape-excluded-major-modes '(magit-status-mode treemacs-mode))
   (evil-define-key* '(insert replace visual operator) 'global "\C-g" #'evil-escape))
 #+end_src
 

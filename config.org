@@ -117,6 +117,7 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
    "f Y" #'c/yank-buffer-path
 
    ;; Primary commands
+   "y" #'yank-from-kill-ring
    "x" #'execute-extended-command
    "X" #'execute-extended-command-for-buffer
    "u" #'universal-argument

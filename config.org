@@ -366,7 +366,8 @@ Put backup files and auto-save files in var directory, rather than alongside the
             (setq auto-save-list-file-prefix (no-littering-expand-var-file-name "auto-save/sessions/")
                   auto-save-file-name-transforms `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))))
 #+end_src
-   When paths are too long, there can be errors when auto-save and backup filenames are generated. This uses a consistent hash, rather than the full path to generate the filenames. This is taken from Doom Emacs.
+
+When paths are too long, there can be errors when auto-save and backup filenames are generated. This uses a consistent hash, rather than the full path to generate the filenames. This is taken from Doom Emacs.
 #+begin_src emacs-lisp
 (defun c/make-auto-save-file-name-hashed (fn)
   "Compress the auto-save file name so paths don't get too long."

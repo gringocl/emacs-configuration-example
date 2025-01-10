@@ -441,7 +441,9 @@ When paths are too long, there can be errors when auto-save and backup filenames
   :init
   (setq evil-escape-key-sequence "jk"
         evil-escape-delay 0.2
-        evil-escape-excluded-major-modes '(magit-status-mode treemacs-mode))
+        evil-escape-excluded-major-modes '(magit-status-mode
+                                           magit-revision-mode
+                                           treemacs-mode))
   (evil-define-key* '(insert replace visual operator) 'global "\C-g" #'evil-escape))
 #+end_src
 

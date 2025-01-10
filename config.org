@@ -1232,19 +1232,26 @@ With prefix arg (C-u), prompt for a project directory to search in."
 (use-package all-the-icons)
 
 (use-package treemacs
-  :bind ("s-b" . #'treemacs)
-  :commands (treemacs)
-  :hook (treemacs-mode-hook . c/treemacs-line-spacing)
-  :config
+  :bind (("s-b" . #'treemacs)
+         (:map
+          evil-treemacs-state-map
+          ("C-h" . 'windmove-left)
+          ("C-l" . 'windmove-right)))
+
+  :preface
   (defun c/treemacs-line-spacing ()
     "Disable line spacing for treemacs."
     (setq line-spacing nil))
 
-  (add-hook 'treemacs-mode-hook #'c/treemacs-line-spacing)
+  :hook (treemacs-mode . c/treemacs-line-spacing)
+  :config
 
-  (setq treemacs-user-mode-line-format 'none
-        treemacs-is-never-other-window t
+  (setq treemacs-follow-after-init t
+        treemacs-is-never-other-window nil
         treemacs-sorting 'alphabetic-case-insensitive-asc
+        treemacs-persist-file (concat no-littering-var-directory "treemacs-persist")
+        treemacs-last-error-persist-file (concat no-littering-var-directory "treemacs-last-error-persist")
+        treemacs-user-mode-line-format 'none
         treemacs-wrap-around nil
         treemacs-collapse-dirs 0
         ;; Don't indent under the root, but indent everywhere else
@@ -1256,7 +1263,6 @@ With prefix arg (C-u), prompt for a project directory to search in."
   (treemacs-fringe-indicator-mode t)
 
   (require 'all-the-icons)
-
   (treemacs-create-theme "simple"
     :config
     (progn
@@ -1277,11 +1283,17 @@ With prefix arg (C-u), prompt for a project directory to search in."
   (treemacs-load-theme "simple"))
 
 (use-package treemacs-evil
-  :after (treemacs evil)
-  :demand t)
+  :after (treemacs)
+  :bind (:map
+         evil-treemacs-state-map
+         ([return] . #'treemacs-RET-action)
+         ([tab]    . #'treemacs-TAB-action)
+         ("TAB"    . #'treemacs-TAB-action)
+         ("o v" . #'treemacs-visit-node-horizontal-split)
+         ("o s" . #'treemacs-visit-node-vertical-split)))
 
 (use-package treemacs-magit
-  :after (treemacs magit)
+  :after (treemacs)
   :demand t)
 
 (use-package treemacs-tab-bar

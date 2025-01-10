@@ -1505,6 +1505,46 @@ Install latest version of transient, as the version included in Emacs is not rec
 #+begin_src emacs-lisp
 (use-feature dired
   :hook (dired-mode . dired-hide-details-mode)
+  :init
+  (setq dired-dwim-target t  ; suggest a target for moving/copying intelligently
+        ;; don't prompt to revert, just do it
+        dired-auto-revert-buffer #'dired-buffer-stale-p
+        ;; Always copy/delete recursively
+        dired-recursive-copies  'always
+        dired-recursive-deletes 'top
+        ;; Ask whether destination dirs should get created when copying/removing files.
+        dired-create-destination-dirs 'ask)
+  :config
+  (define-key dired-mode-map (kbd "C-c C-e") #'wdired-change-to-wdired-mode)
+  (setq dired-listing-switches "-ahl -v --group-directories-first"))
+
+(use-package dirvish
+  :commands (dirvish-find-entry-a dirvish-dired-noselect-a)
+  :init
+  (setq dirvish-cache-dir (file-name-concat no-littering-var-directory "dirvish"))
+  ;; ;; HACK: ...
+  ;; (advice-add #'dired-find-file :override #'dirvish-find-entry-a)
+  ;; (advice-add #'dired-noselect :around #'dirvish-dired-noselect-a)
+  :config
+  (dirvish-override-dired-mode)
+
+  (evil-define-key 'normal dirvish-mode-map "q" 'dirvish-quit)
+
+  (setq dirvish-reuse-session nil)
+  (setq dirvish-subtree-always-show-state t)
+  (setq dirvish-attributes '(file-size)
+        dirvish-mode-line-format
+        '(:left (sort file-time symlink) :right (omit yank index)))
+  (setq dirvish-attributes nil
+        dirvish-use-header-line nil
+        dirvish-use-mode-line nil))
+#+end_src
+
+** Haml
+
+#+begin_src emacs-lisp
+(use-package haml-mode
+  :commands (haml-mode))
 #+end_src
 
 * Minor Modes

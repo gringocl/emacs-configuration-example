@@ -1120,7 +1120,51 @@ Disabled this is favor of using vertico-posframe. embark was opening a new frame
 
 #+begin_src emacs-lisp
 (use-package ws-butler
-  :hook (c/first-file-hook . ws-butler-global-mode))
+  :hook (c/first-file . ws-butler-global-mode)
+  :config
+  (setq ws-butler-keep-whitespace-before-point nil)
+  ;; Do not exempt markdown mode. I use line continuations when I need to, and
+  ;; most markdown files I write do not require them.
+  (c/delq 'markdown-mode ws-butler-global-exempt-modes)
+
+  ;; Remediation for defect introduced on Nov 6 2024
+  ;; Remove after merged: https://github.com/lewang/ws-butler/pull/54
+  (defun ws-butler-before-save ()
+    "Trim white space before save.
+
+Setting `ws-butler-keep-whitespace-before-point' will also
+ensure point doesn't jump due to white space trimming."
+
+    ;; save data to restore later
+    (when ws-butler-keep-whitespace-before-point
+      (ws-butler-with-save
+       (widen)
+       (setq ws-butler-presave-coord (list
+                                      (line-number-at-pos (point))
+                                      (current-column)))))
+    (let (last-end)
+      (ws-butler-map-changes
+       (lambda (_prop beg end)
+         (save-excursion
+           (setq beg (progn (goto-char beg)
+                            (line-beginning-position))
+                 ;; Subtract one from end to overcome Emacs bug #17784, since we
+                 ;; always expand to end of line anyway, this should be OK.
+                 end (progn (goto-char (1- end))
+                            (line-end-position))))
+         (when (funcall ws-butler-trim-predicate beg end)
+           (ws-butler-clean-region beg end))
+         (setq last-end end)))
+      (ws-butler-maybe-trim-eob-lines last-end))))
+
+(defmacro c/delq (elt list &optional fetcher)
+  "`delq' ELT from LIST in-place.
+If FETCHER is a function, ELT is used as the key in LIST (an alist)."
+  `(setq ,list
+         (delq ,(if fetcher
+                    `(funcall ,fetcher ,elt ,list)
+                  elt)
+               ,list)))
 #+end_src
 
 ** Spell Checking (Flyspell)

@@ -1569,6 +1569,17 @@ Install latest version of transient, as the version included in Emacs is not rec
 (add-hook 'prog-mode-hook 'display-line-numbers-mode)
 #+end_src
 
+** Yasnippet
+
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :bind (:map yas-minor-mode-map
+        ("C-c i" . yas-insert-snippet))
+  :commands (yas-insert-snippet)
+  :config
+  (yas-global-mode))
+#+end_src
+
 * Terminal
 ** Terminal Emulator (vterm)
 

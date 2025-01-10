@@ -953,7 +953,7 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package vertico
-  :hook (c/first-input-hook . vertico-mode))
+  :hook (c/first-input . vertico-mode))
 
 (use-package vertico-posframe
   :after vertico
@@ -991,7 +991,7 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package corfu
-  :hook (c/first-buffer-hook . corfu-history-mode)
+  :hook (c/first-buffer . corfu-history-mode)
   :bind
   (:map corfu-map
         ("TAB" . corfu-next)
@@ -1047,7 +1047,7 @@ separated by spaces. For example, "som thi" will match "this-is-some-thing".
 
 #+begin_src emacs-lisp
 (use-package marginalia
-  :hook (c/first-input-hook . marginalia-mode)
+  :hook (c/first-input . marginalia-mode)
   ;; Bind `marginalia-cycle' locally in the minibuffer.  To make the binding
   ;; available in the *Completions* buffer, add it to the
   ;; `completion-list-mode-map'.
@@ -1098,7 +1098,7 @@ Disabled this is favor of using vertico-posframe. embark was opening a new frame
 
 #+begin_src emacs-lisp
 (use-package mini-frame
-  :hook (c/first-input-hook . mini-frame-mode)
+  :hook (c/first-input . mini-frame-mode)
   :config
   (custom-set-variables
    '(mini-frame-show-parameters
@@ -1296,7 +1296,7 @@ With prefix arg (C-u), prompt for a project directory to search in."
 #+begin_src emacs-lisp
 (use-package tabspaces
   :after consult
-  :hook (c/after-input-hook . tabspaces-mode)
+  :hook (c/after-input . tabspaces-mode)
   :commands (tabspaces-mode)
   :init
   (setq tabspaces-session-file (no-littering-expand-var-file-name "tabsession.el")
@@ -1346,8 +1346,8 @@ Two space indentation by default.
 #+begin_src emacs-lisp
 (use-package markdown-mode
   :commands (markdown-mode)
-  :hook ((markdown-mode-hook . visual-line-mode)
-         (markdown-mode-hook . visual-wrap-prefix-mode))
+  :hook ((markdown-mode . visual-line-mode)
+         (markdown-mode . visual-wrap-prefix-mode))
 
   :config
   (setq markdown-list-indent-width 2))
@@ -1401,7 +1401,7 @@ Install latest version of transient, as the version included in Emacs is not rec
 
 #+begin_src emacs-lisp
 (use-feature which-key
-  :hook (c/first-input-hook . which-key-mode))
+  :hook (c/first-input . which-key-mode))
 #+end_src
 
 ** Helpful
@@ -1431,7 +1431,7 @@ Install latest version of transient, as the version included in Emacs is not rec
 
 #+begin_src emacs-lisp
 (use-package undo-fu-session
-  :hook (c/first-file-hook .  undo-fu-session-global-mode)
+  :hook (c/first-file .  undo-fu-session-global-mode)
   :config
   (setq undo-fu-session-incompatible-files '("/COMMIT_EDITMSG\\'" "/git-rebase-todo\\'")))
 #+end_src
@@ -1477,7 +1477,7 @@ Install latest version of transient, as the version included in Emacs is not rec
 
 #+begin_src emacs-lisp
 (use-feature dired
-  :hook (dired-mode-hook. dired-hide-details-mode))
+  :hook (dired-mode . dired-hide-details-mode)
 #+end_src
 
 * Minor Modes

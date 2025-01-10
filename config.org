@@ -1412,6 +1412,16 @@ Install latest version of transient, as the version included in Emacs is not rec
 (use-package transient
   :after (magit))
 #+end_src
+** Browse at remote
+
+#+begin_src emacs-lisp
+(use-package browse-at-remote
+  :commands (browse-at-remote)
+  :init
+  (setq browse-at-remote-add-line-number-if-no-region-selected nil)
+  :config
+  (leader-key-set "g y" 'browse-at-remote-kill))
+#+end_src
 
 * Assistance
 ** Which Key

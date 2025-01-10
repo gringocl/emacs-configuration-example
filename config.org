@@ -1386,9 +1386,14 @@ Two space indentation by default.
 #+begin_src emacs-lisp
 (use-package magit
   :commands (magit-status)
+
+  :bind (:map transient-map
+              ([escape] . transient-quit-one))
+
   :hook (magit-diff-mode-hook . (lambda ()
                                   (setq truncate-lines nil)))
   :config
+
   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
   (setq magit-bury-buffer-function 'magit-restore-window-configuration)
 

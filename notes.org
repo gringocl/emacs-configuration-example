@@ -1,7 +1,15 @@
 * To Dos
 - [x] Add org-capture to add to this notes file
 - [x] embark in the minibuffer, rather than in a new frame
+- [x] windmove left to treemacs
+- [x] vterm project root aware
 - [ ] Review leader commands in doom setup, i.e. window, buffer, file commands and copy over
-- [ ] windmove left to treemacs
-- [ ] vterm project root aware
 - [ ] Stick the end of the buffer to the bottom of the window
+** TODO Yasnippet
+  [[file:~/wsgr/neuron/employee-onboarding-web/app/views/employee_onboarding_web/shared/employee_onboarding/form/additional_information/restrictive_covenant_enforceability/_pennsylvania.html.haml::-Deceptive if restrictive_covenant_data.object.non_compete_desired?]]
+** TODO Indenting issues in markdown-mode
+
+[[file:~/wsgr/neuron/work-logs/miles-starkenburg.md::-]]
+** TODO Large diff slows down buffer - look in doom
+* Ideas
+** If I mostly use 1 window and occasionally only use 2. `other-window` is all that I should need. I can just not worry about windmove-<direction>

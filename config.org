@@ -1612,25 +1612,38 @@ Install latest version of transient, as the version included in Emacs is not rec
   (setq dired-listing-switches "-ahl -v --group-directories-first"))
 
 (use-package dirvish
-  :commands (dirvish-find-entry-a dirvish-dired-noselect-a)
+  :after (dired)
+  ;; :commands (dirvish-find-entry-a dirvish-dired-noselect-a)
   :init
-  (setq dirvish-cache-dir (file-name-concat no-littering-var-directory "dirvish"))
-  ;; ;; HACK: ...
+  (setq dirvish-cache-dir (concat no-littering-var-directory "dirvish"))
   ;; (advice-add #'dired-find-file :override #'dirvish-find-entry-a)
   ;; (advice-add #'dired-noselect :around #'dirvish-dired-noselect-a)
   :config
   (dirvish-override-dired-mode)
 
-  (evil-define-key 'normal dirvish-mode-map "q" 'dirvish-quit)
+  (evil-define-key 'normal dirvish-mode-map
+    "q" 'dirvish-quit
+    [tab] 'dirvish-toggle-subtree)
 
-  (setq dirvish-reuse-session nil)
-  (setq dirvish-subtree-always-show-state t)
-  (setq dirvish-attributes '(file-size)
-        dirvish-mode-line-format
-        '(:left (sort file-time symlink) :right (omit yank index)))
-  (setq dirvish-attributes nil
+  (setq dirvish-reuse-session nil
+        dirvish-subtree-always-show-state t
+        dirvish-attributes '(subtree-state)
         dirvish-use-header-line nil
         dirvish-use-mode-line nil))
+
+(use-feature dired-x
+  :after (dired)
+  :hook (dired-mode . dired-omit-mode)
+  :bind (:map dired-mode-map ("h" . dired-omit-mode))
+  :config
+  (setq dired-clean-confirm-killing-deleted-buffers nil)
+  ;; Hide uninteresting files
+  (setq dired-omit-verbose nil
+        dired-omit-extensions '("elc")
+        dired-omit-files
+        (concat dired-omit-files
+                "\\|^.DS_Store\\'"
+                "\\|^.git\\'")))
 #+end_src
 
 ** Haml

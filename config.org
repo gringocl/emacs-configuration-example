@@ -539,6 +539,15 @@ When paths are too long, there can be errors when auto-save and backup filenames
   :bind (
    ([remap comment-line] . #'evilnc-comment-or-uncomment-lines)))
 #+end_src
+** Evil Multi Edit
+
+#+begin_src emacs-lisp
+(use-package evil-multiedit
+  :commands (evil-multiedit-match-and-next)
+  :config
+  (evil-multiedit-default-keybinds))
+#+end_src
+
 * User Interface
 ** DISABLED General UX
 

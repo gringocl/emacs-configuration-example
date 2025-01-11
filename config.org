@@ -8,7 +8,7 @@
 ** Snippets
 ** Imagine a way to keep automated test output in a buffer to utilize as library documentation, ie could be foldable, searchable?
 * Utility Functions
-** `insert-log-date`
+** `c/insert-log-date`
 
 #+begin_src emacs-lisp
 (defun  c/insert-log-date ()
@@ -20,7 +20,7 @@ e.g. Fri Jan 07 2022"
 
 (global-set-key (kbd "C-x C-d") 'c/insert-log-date)
 #+end_src
-** `yank-buffer-path`
+** `c/yank-buffer-path`
 
 #+begin_src emacs-lisp
 (defun c/yank-buffer-path (&optional root)
@@ -40,7 +40,7 @@ e.g. Fri Jan 07 2022"
     (error "Couldn't find filename in current buffer")))
 #+end_src
 
-** `yank-buffer-path-relative-to-project`
+** `c/yank-buffer-path-relative-to-project`
 
 #+begin_src emacs-lisp
 (defun c/yank-buffer-path-relative-to-project (&optional include-root)
@@ -51,6 +51,70 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
    (if include-root
        (file-name-directory (directory-file-name (project-root (project-current))))
      (project-root (project-current)))))
+#+end_src
+
+** `c/copy-visited-file`
+
+#+begin_src emacs-lisp
+(defun c/copy-visited-file (new-path &optional force-p)
+  "Copy current buffer's file to NEW-PATH and open it.
+If FORCE-P is non-nil, overwrite destination file without confirmation."
+  (interactive
+   (list (read-file-name "Copy file to: ")
+         current-prefix-arg))
+  (unless (and buffer-file-name (file-exists-p buffer-file-name))
+    (user-error "Buffer is not visiting any file"))
+  (let ((old-path (buffer-file-name (buffer-base-buffer)))
+        (new-path (expand-file-name new-path)))
+    (make-directory (file-name-directory new-path) t)
+    (copy-file old-path new-path (or force-p 1))
+    ;; Update Magit if in a git repository
+    (when (featurep 'magit)
+      (when-let ((default-directory (magit-toplevel (file-name-directory new-path))))
+        (magit-refresh)))
+    (find-file new-path)
+    (message "File copied to %S" (abbreviate-file-name new-path))))
+#+end_src
+
+** `c/delete-visited-file`
+
+#+begin_src emacs-lisp
+(defun c/delete-this-file (&optional path force-p)
+  "Delete PATH, kill its buffers and expunge it from magit.
+If PATH is not specified, default to the current buffer's file.
+If FORCE-P, delete without confirmation."
+  (interactive
+   (list (buffer-file-name (buffer-base-buffer))
+         current-prefix-arg))
+  (let* ((path (or path (buffer-file-name (buffer-base-buffer))))
+         (short-path (and path (abbreviate-file-name path))))
+    ;; Error handling
+    (unless path
+      (user-error "Buffer is not visiting any file"))
+    (unless (file-exists-p path)
+      (error "File doesn't exist: %s" path))
+    (unless (or force-p (y-or-n-p (format "Really delete %S?" short-path)))
+      (user-error "Aborted"))
+
+    ;; Main deletion logic
+    (let ((buf (current-buffer)))
+      (unwind-protect
+          (progn (delete-file path t) t)
+        (if (file-exists-p path)
+            (error "Failed to delete %S" short-path)
+          ;; Kill all windows displaying this buffer
+          (dolist (window (get-buffer-window-list buf nil t))
+            (with-selected-window window
+              (kill-buffer buf)))
+          ;; Update Magit status if available
+          (when (fboundp 'magit-refresh)
+            (with-demoted-errors "Error refreshing magit: %S"
+              (magit-refresh)))
+          (message "Deleted %S" short-path))))))
+#+end_src
+
+#+begin_src emacs-lisp
+
 #+end_src
 
 * Initial Packages
@@ -113,6 +177,11 @@ With non-nil prefix INCLUDE-ROOT, also include the project's root."
    ;; Files
    "f f" #'project-find-file
    "f F" #'find-file
+
+   "f C" #'c/copy-visited-file
+   "f R" #'c/rename-visited-file
+   "f D" #'c/delete-visited-file
+
    "f y" #'c/yank-buffer-path-relative-to-project
    "f Y" #'c/yank-buffer-path
 

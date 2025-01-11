@@ -1243,10 +1243,20 @@ If FETCHER is a function, ELT is used as the key in LIST (an alist)."
 
 #+begin_src emacs-lisp
 (use-feature flyspell
-  :hook ((org-mode git-commit-mode markdown-mode) . flyspell-mode)
+  :hook (((org-mode git-commit-mode markdown-mode) . flyspell-mode)
+         (prog-mode . flyspell-prog-mode))
   :config
   (setq flyspell-issue-message-flag nil
         flyspell-issue-welcome-flag nil))
+
+(use-package flyspell-correct
+   :commands flyspell-correct-previous
+   :bind (([remap ispell-word] . #'flyspell-correct-at-point)
+          :map
+          popup-menu-keymap
+          ([escape] . #'keyboard-quit))
+   :config
+   (setq flyspell-popup-correct-delay 0.8))
 #+end_src
 
 ** Editing Search Results (wgrep)

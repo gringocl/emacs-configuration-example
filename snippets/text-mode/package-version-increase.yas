@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: package-version-increase
+# key: pv
+# --
+Package version is increased from ${1:`(shell-command-to-string "git diff --cached --word-diff | sed -n -E -e 's/^.*version.*\\[\\-\"([[:digit:]\\.\-pre]+)\".*/\\1/p' | tr -d '\\n'")`} to ${2:`(shell-command-to-string "git diff --cached --word-diff | sed -n -E -e 's/^.*version.*\\{\\+\"([[:digit:]\\.\-pre]+)\".*/\\1/p' | tr -d '\\n'")`}

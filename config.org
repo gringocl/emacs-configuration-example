@@ -151,7 +151,7 @@ If FORCE-P, delete without confirmation."
   (leader-key-declare-prefix "r" "error" "Error")
   (leader-key-declare-prefix "S" "flyspell" "Flyspell")
   (leader-key-declare-prefix "s" "search" "Search")
-  (leader-key-declare-prefix "T" "toggle" "Toggle")
+  (leader-key-declare-prefix "t" "toggle" "Toggle")
   (leader-key-declare-prefix "u" "C-u" "Universal Argument")
   (leader-key-declare-prefix "w" "windows" "Windows")
 
@@ -185,6 +185,9 @@ If FORCE-P, delete without confirmation."
    "f y" #'c/yank-buffer-path-relative-to-project
    "f Y" #'c/yank-buffer-path
 
+   ;; Projects
+   "p f" #'project-find-file
+
    ;; Primary commands
    "y" #'yank-from-kill-ring
    "x" #'execute-extended-command
@@ -207,7 +210,7 @@ If FORCE-P, delete without confirmation."
    "w h" #'evil-window-split
 
    ;; Toggle
-   "T w" #'visual-line-mode))
+   "t w" #'visual-line-mode))
 #+end_src
 
 ** Compdef
@@ -1384,6 +1387,8 @@ With prefix arg (C-u), prompt for a project directory to search in."
         tabspaces-project-switch-commands #'project-find-file)
   :config
   (consult-customize consult--source-buffer :hidden t :default nil)
+
+  (leader-key-set "p p" #'tabspaces-project-switch-project-open-file)
 
   ;; set consult-workspace buffer list
   (defvar consult--source-workspace

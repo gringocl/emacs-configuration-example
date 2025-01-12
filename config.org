@@ -605,7 +605,7 @@ Copied this from `doom-ui.el`
       ;; never automatically recentered. The default (0) triggers this too
       ;; aggressively, so I've set it to 10 to recenter if scrolling too far
       ;; off-screen.
-      scroll-conservatively 10
+      scroll-conservatively 101
       scroll-margin 0
       scroll-preserve-screen-position t
       ;; Reduce cursor lag by a tiny bit by not auto-adjusting `window-vscroll'
@@ -614,6 +614,15 @@ Copied this from `doom-ui.el`
       ;; mouse
       mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
       mouse-wheel-scroll-amount-horizontal 2)
+#+end_src
+
+*** Ultra Scroll
+
+#+begin_src emacs-lisp
+(use-package ultra-scroll
+  :ensure (ultra-scroll :host github :repo "jdtsmith/ultra-scroll" :protocol ssh)
+  :config
+  (ultra-scroll-mode 1))
 #+end_src
 
 ** Nano Theme

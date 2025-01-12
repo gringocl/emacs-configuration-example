@@ -486,10 +486,10 @@ When paths are too long, there can be errors when auto-save and backup filenames
 
   :bind (:map evil-normal-state-map
               ("-" . dired-jump)
-              ("C-h" . 'windmove-left)
-              ("C-j" . 'windmove-down)
-              ("C-k" . 'windmove-up)
-              ("C-l" . 'windmove-right))
+              ("C-h" . windmove-left)
+              ("C-j" . windmove-down)
+              ("C-k" . windmove-up)
+              ("C-l" . windmove-right))
 
   :config
   (evil-mode 1)

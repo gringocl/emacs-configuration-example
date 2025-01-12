@@ -1214,7 +1214,7 @@ Disabled this is favor of using vertico-posframe. embark was opening a new frame
 #+end_src
 
 * Text Editing
-** Delete Trailing Whitespace
+** Delete Trailing White Space
 
 #+begin_src emacs-lisp
 (use-package ws-butler
@@ -1265,7 +1265,8 @@ If FETCHER is a function, ELT is used as the key in LIST (an alist)."
                ,list)))
 #+end_src
 
-** Spell Checking (Flyspell)
+** Spell Checking
+*** Flyspell
 
 #+begin_src emacs-lisp
 (use-feature flyspell
@@ -1274,13 +1275,14 @@ If FETCHER is a function, ELT is used as the key in LIST (an alist)."
   :config
   (setq flyspell-issue-message-flag nil
         flyspell-issue-welcome-flag nil))
+#+end_src
 
+*** Flyspell correct
+
+#+begin_src emacs-lisp
 (use-package flyspell-correct
    :commands flyspell-correct-previous
-   :bind (([remap ispell-word] . #'flyspell-correct-at-point)
-          :map
-          popup-menu-keymap
-          ([escape] . #'keyboard-quit))
+   :bind ([remap ispell-word] . #'flyspell-correct-at-point)
    :config
    (setq flyspell-popup-correct-delay 0.8))
 #+end_src

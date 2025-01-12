@@ -1068,6 +1068,8 @@ The default tab-bar name uses the buffer name."
 #+begin_src emacs-lisp
 (use-package cape
   :hook (completion-at-point-functions . cape-elisp-block)
+  :bind (:map evil-insert-state-map
+              ("C-x C-l" . cape-line))
   :config
   (setq cape-dabbrev-check-other-buffers nil))
 #+end_src

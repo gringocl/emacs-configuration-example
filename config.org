@@ -546,6 +546,12 @@ When paths are too long, there can be errors when auto-save and backup filenames
   :commands (evil-multiedit-match-and-next)
   :config
   (evil-multiedit-default-keybinds))
+
+(use-package iedit
+  :ensure (iedit :host github :repo "victorhge/iedit" :protocol ssh)
+  :init
+  ;; Fix conflict with embark.
+  (setq iedit-toggle-key-default nil))
 #+end_src
 
 * User Interface

@@ -5,13 +5,27 @@
 - [x] vterm project root aware
 - [ ] Review leader commands in doom setup, i.e. window, buffer, file commands and copy over
 - [ ] Stick the end of the buffer to the bottom of the window
-- [ ] evil-multiedit
-- [ ] flyspell in minibuffer
-- [ ] evil-complete-next-line
+- [ ] evil-multiedit highlight
+- [x] Flyspell in posframe
+- [x] evil-complete-next-line
 ** TODO Indenting issues in markdown-mode
 
 [[file:~/wsgr/neuron/work-logs/miles-starkenburg.md::-]]
 ** TODO Large diff slows down buffer - look in doom
 ** TODO I want splits to open new vterm sessions in the same directory
+** TODO Codeblock highlight should be different than visual mode
+
+  [[file:~/code/personal/emacs-configuration-example/config.org::*Scrolling][Scrolling]]
+** TODO Investigate if dirvish can replace treemacs
+
+  [[file:~/dotfiles/org/stack.org::*Current To Do][Current To Do]]
+** TODO Explore a deployment package version increase similar to the update fuzzy script
+** TODO Ripgrep in neuron
+
+  [[file:~/wsgr/neuron/environment/lib/environment/environment.rb::end]]
+** TODO Add more things to savehist
+  scratch, git commit messages, registers
+
+  [[file:~/wsgr/neuron/core-web/.git/COMMIT_EDITMSG]]
 * Ideas
 ** If I mostly use 1 window and occasionally only use 2. `other-window` is all that I should need. I can just not worry about windmove-<direction>

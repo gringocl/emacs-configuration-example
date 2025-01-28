@@ -11,12 +11,39 @@
 ** `c/insert-log-date`
 
 #+begin_src emacs-lisp
-(defun  c/insert-log-date ()
-    "Insert a date in my typical log format.
-
-e.g. Fri Jan 07 2022"
-    (interactive)
-    (insert (format-time-string "%a %b %-e %Y")))
+(defun c/insert-log-date (&optional days-back)
+  "Insert date(s) in my typical log format (e.g. Fri Jan 7 2022).
+With prefix argument DAYS-BACK, insert date that many days in the past.
+With C-u (no number), prompt for number of days back.
+With double prefix C-u C-u, prompt for days and generate a sequence
+of past dates, ending with today."
+  (interactive "P")
+  (let* ((do-sequence (equal days-back '(16))) ; C-u C-u
+         (days-to-past
+          (cond
+           ((null days-back) 0)
+           ((eq days-back '(4))  ; C-u
+            (string-to-number
+             (read-string "Days back: " "1")))
+           (do-sequence
+            (string-to-number
+             (read-string "Generate sequence for how many past days: " "3")))
+           (t (prefix-numeric-value days-back))))
+         (time-spec (if (not do-sequence)
+                       ;; Single date case
+                       (time-subtract (current-time)
+                                    (days-to-time days-to-past))
+                     ;; Sequence case
+                     (let ((dates '()))
+                       (dotimes (i days-to-past)
+                         (push (format-time-string "%a %b %-e %Y"
+                                                 (time-subtract (current-time)
+                                                              (days-to-time i)))
+                               dates))
+                        dates))))
+    (if (not do-sequence)
+        (insert (format-time-string "%a %b %-e %Y" time-spec))
+      (insert (string-join time-spec ", ")))))
 
 (global-set-key (kbd "C-x C-d") 'c/insert-log-date)
 #+end_src
@@ -1059,11 +1086,20 @@ The default tab-bar name uses the buffer name."
 #+begin_src emacs-lisp
 (use-package vertico
   :hook (c/first-input . vertico-mode))
+;; :init
+;; (advice-add #'completing-read-multiple :filter-args
+;;           (lambda (args)
+;;             (cons (format "[CRM%s] %s"
+;;                         (replace-regexp-in-string
+;;                          "\\`\\[.*?]\\*\\|\\[.*?]\\*\\'" ""
+;;                          crm-separator)
+;;                         (car args))
+;;                   (cdr args)))))
 
 (use-package vertico-posframe
-
+  :config
   (vertico-multiform-mode -1)
- (vertico-posframe-mode 1))
+  (vertico-posframe-mode 1))
 #+end_src
 
 ** Completion At Point

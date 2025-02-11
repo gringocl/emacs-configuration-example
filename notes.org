@@ -27,5 +27,11 @@
   scratch, git commit messages, registers
 
   [[file:~/wsgr/neuron/core-web/.git/COMMIT_EDITMSG]]
+** TODO Date script prefix arguments for before and after dates???
+
+  [[file:~/wsgr/neuron/work-logs/miles-starkenburg.md]]
+** TODO Ruby end does't auto-indent
+
+  [[file:~/wsgr/neuron/incorporation-web/app/mailers/test_mailer.rb::end]]
 * Ideas
 ** If I mostly use 1 window and occasionally only use 2. `other-window` is all that I should need. I can just not worry about windmove-<direction>

@@ -1351,6 +1351,14 @@ If FETCHER is a function, ELT is used as the key in LIST (an alist)."
   (setq wgrep-auto-save-buffer t))
 #+end_src
 
+** Flycheck
+
+#+begin_src emacs-lisp
+(use-package flycheck
+  :hook (c/first-buffer . global-flycheck-mode)
+  :ensure (flycheck :host github :repo "aaronjensen/flycheck" :branch: "ruby-3.4"  :protocol ssh))
+#+end_src
+
 * Projects
 ** DISABLED [[https://github.com/aurtzy/disproject][Disproject]]
 

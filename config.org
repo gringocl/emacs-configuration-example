@@ -484,7 +484,8 @@ Macro to use to configure built-in features, rather than packages that do not ne
 ;; (setq initial-buffer-choice
 ;;   (lambda () (get-buffer "*Messages*")))
 ;:(setq initial-buffer-choice "~/code/personal/emacs-configuration-example/config.org")
-  (setq create-lock-files nil)
+  (setq create-lock-files nil
+        insert-directory-program "gls")
 #+end_src
 
 ** C-g more helpful

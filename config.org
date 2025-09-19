@@ -1510,10 +1510,16 @@ With prefix arg (C-u), prompt for a project directory to search in."
     (consult-ripgrep dir (regexp-quote symbol))))
 #+end_src
 
-** Tree View (Treemacs)
+** All the icons
+When on new installation remember to rum `M-x all-the-icons-install-fonts`
 
 #+begin_src emacs-lisp
 (use-package all-the-icons)
+#+end_src
+
+** Tree View (Treemacs)
+
+#+begin_src emacs-lisp
 
 (use-package treemacs
   :commands treemacs

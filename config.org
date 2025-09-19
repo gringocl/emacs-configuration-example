@@ -1899,6 +1899,9 @@ Install latest version of transient, as the version included in Emacs is not rec
         ("C-c i" . yas-insert-snippet))
   :commands (yas-insert-snippet)
   :config
+  (setq yas-snippet-dirs
+      '("~/.emacs.d/snippets"))
+
   (yas-global-mode))
 #+end_src
 

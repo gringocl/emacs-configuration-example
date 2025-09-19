@@ -33,5 +33,12 @@
 ** TODO Ruby end does't auto-indent
 
   [[file:~/wsgr/neuron/incorporation-web/app/mailers/test_mailer.rb::end]]
+** TODO HAML Indentation
+
+  [[file:~/wsgr/neuron/employee-onboarding-web/app/views/employee_onboarding_web/shared/employee_onboarding/form/additional_information/restrictive_covenant_enforceability/_louisiana.html.haml::- exempt_job_category.help do]]
+** TODO `*` should select the entire word object
+
+  [[file:~/code/personal/emacs-configuration-example/config.org::*Magit][Magit]]
+** TODO `spc-*` word object like doom-emacs
 * Ideas
 ** If I mostly use 1 window and occasionally only use 2. `other-window` is all that I should need. I can just not worry about windmove-<direction>

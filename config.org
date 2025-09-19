@@ -365,7 +365,7 @@ unreadable. Returns the names of envvars that were changed."
   (c/load-envvars-file c/env-file))
 #+end_src
 
-** gptel
+** DISABLED gptel
 
 #+begin_src emacs-lisp
 (use-package gptel

@@ -1,5 +1,8 @@
 ;;; early-init.el -*- no-byte-compile: t; lexical-binding: t; -*-
-
+(if (file-exists-p "/opt/homebrew/bin")
+    (setenv "PATH" (format "%s:%s"
+		           "/opt/homebrew/bin"
+		           (getenv "PATH"))))
 (setq gc-cons-threshold most-positive-fixnum)
 
 (defvar c/early-init-el-start-time (current-time) "Time when early-init.el was started")

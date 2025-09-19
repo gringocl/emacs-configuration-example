@@ -617,7 +617,8 @@ When paths are too long, there can be errors when auto-save and backup filenames
         evil-want-C-d-scroll t
         evil-want-C-h-delete t
         evil-disable-insert-state-bindings t
-        evil-respect-visual-line-mode t)
+        evil-respect-visual-line-mode t
+        evil-symbol-word-search t)
 
   :bind (:map evil-normal-state-map
               ("-" . dired-jump)

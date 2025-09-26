@@ -140,6 +140,15 @@ If FORCE-P, delete without confirmation."
           (message "Deleted %S" short-path))))))
 #+end_src
 
+** `c/consult-ripgrep-in-directory`
+
+#+begin_src emacs-lisp
+(defun c/consult-ripgrep-in-directory ()
+    "Find a directory and then search in that directory."
+    (interactive)
+    (consult-ripgrep t))
+#+end_src
+
 * Initial Packages
 ** GCMH
 

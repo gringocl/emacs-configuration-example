@@ -613,6 +613,13 @@ When paths are too long, there can be errors when auto-save and backup filenames
 (advice-add #'make-backup-file-name-1 :around #'c/make-backup-file-name-hashed)
 #+end_src
 
+** Tramp
+
+#+begin_src emacs-lisp
+(setq tramp-terminal-type "xterm-256color"
+      tramp-default-remote-shell "/bin/bash")
+#+end_src
+
 * Evil
 ** Evil
 
@@ -825,7 +832,7 @@ Copied this from `doom-ui.el`
    '(vundo-default ((t (:family "Iosevka SS04"))))))
 #+end_src
 
-** Nano Modeline
+** DISABLED Nano Modeline
 
 #+begin_src emacs-lisp
 (use-package memoize
@@ -1042,6 +1049,23 @@ using the given FACE-PREFIX as the default."
 
   (with-current-buffer "*Messages*"
     (c/nano-modeline)))
+#+end_src
+
+** Modern Header Line
+
+#+begin_src emacs-lisp
+(use-package modern-header-line
+  :ensure (:host github :repo "aaronjensen/emacs-modern-header-line" :protocol ssh)
+  :demand t
+
+  :config
+  (setq modern-header-line-abbreviations
+        '(("some-long-name" . "sln")))
+
+  (modern-header-line-mode)
+
+  (with-current-buffer "*Messages*"
+    (modern-header-line)))
 #+end_src
 
 ** Nano SVG Mode
@@ -1301,7 +1325,10 @@ The default tab-bar name uses the buffer name."
 
 #+begin_src emacs-lisp
 (use-package consult
-  :bind ("C-x b" . consult-buffer))
+  :bind ("C-x b" . consult-buffer)
+  :config
+  (setq consult-ripgrep-args
+        "rg --null --line-buffered --color=never --max-columns=100000 --path-separator / --smart-case --no-heading --with-filename --line-number --search-zip"))
 #+end_src
 
 ** Completion Style (Orderless)
@@ -1615,7 +1642,7 @@ When on new installation remember to rum `M-x all-the-icons-install-fonts`
   (setq tabspaces-session-file (no-littering-expand-var-file-name "tabsession.el")
         tabspaces-project-switch-commands #'project-find-file)
   :config
-  (consult-customize consult--source-buffer :hidden t :default nil)
+  (consult-customize consult-source-buffer :hidden t :default nil)
 
   (leader-key-set "p p" #'tabspaces-project-switch-project-open-file)
 
@@ -1680,7 +1707,148 @@ Two space indentation by default.
         ruby-method-call-indent nil
         ruby-method-params-indent nil
         ruby-after-operator-indent nil
-        ruby-bracketed-args-indent nil))
+        ruby-bracketed-args-indent nil)
+
+  (defun ruby-smie-rules (kind token)
+    (pcase (cons kind token)
+      ('(:elem . basic) ruby-indent-level)
+      ;; "foo" "bar" is the concatenation of the two strings, so the second
+      ;; should be aligned with the first.
+      ('(:elem . args) (if (looking-at "\\s\"") 0))
+      ;; (`(:after . ",") (smie-rule-separator kind))
+      ('(:before . ";")
+       (cond
+        ((smie-rule-parent-p "def" "begin" "do" "class" "module" "for"
+                             "while" "until" "unless"
+                             "if" "then" "elsif" "else" "when" "in"
+                             "rescue" "ensure" "{")
+         (smie-rule-parent ruby-indent-level))
+        ;; For (invalid) code between switch and case.
+        ;; (if (smie-parent-p "switch") 4)
+        ))
+      (`(:before . ,(or "(" "[" "{"))
+       (cond
+        ((and (not (eq ruby-bracketed-args-indent t))
+              (or (smie-rule-prev-p "," "(" "[" "=>")
+                  (save-excursion
+                    (let ((tok (ruby-smie--backward-token)))
+                      (and tok (string-match ":\\'" tok))))))
+         (cons 'column (current-indentation)))
+        ((and (equal token "{")
+              (not (smie-rule-prev-p "(" "{" "[" "," "=>" "=" "return" ";" "do"))
+              (save-excursion
+                (forward-comment -1)
+                (not (eq (preceding-char) ?:))))
+         ;; Curly block opener.
+         (if ruby-block-indent
+             (ruby-smie--indent-to-stmt)
+           (cons 'column (current-indentation))))
+        ((smie-rule-hanging-p)
+         ;; Treat purely syntactic block-constructs as being part of their parent,
+         ;; when the opening token is hanging and the parent is not an
+         ;; open-paren.
+         (cond
+          ((eq (car (smie-indent--parent)) t) nil)
+          ;; When after `.', let's always de-indent,
+          ;; because when `.' is inside the line, the
+          ;; additional indentation from it looks out of place.
+          ((smie-rule-parent-p ".")
+           ;; Traverse up the call chain until the parent is not `.',
+           ;; or `.' at indentation, or at eol.
+           (while (and (not (ruby-smie--bosp))
+                       (equal (nth 2 (smie-backward-sexp ".")) ".")
+                       (not (ruby-smie--bosp)))
+             (forward-char -1))
+           (smie-indent-virtual))
+          ((save-excursion
+             (and (smie-rule-parent-p " @ ")
+                  (goto-char (nth 1 (smie-indent--parent)))
+                  (smie-rule-prev-p "def=")
+                  (cons 'column (- (current-column) 3)))))
+          (t (smie-rule-parent))))))
+      (`(:after . ,(or "(" "[" "{"))
+       ;; FIXME: Shouldn't this be the default behavior of
+       ;; `smie-indent-after-keyword'?
+       (save-excursion
+         (forward-char 1)
+         (skip-chars-forward " \t")
+         ;; `smie-rule-hanging-p' is not good enough here,
+         ;; because we want to reject hanging tokens at bol, too.
+         (unless (or (eolp) (forward-comment 1))
+           (cons 'column (current-column)))))
+      ('(:before . " @ ")
+       (cond
+        ((and (not ruby-parenless-call-arguments-indent)
+              (not (smie-rule-parent-p "def" "def=")))
+         (ruby-smie--indent-to-stmt ruby-indent-level))
+        ((or (eq ruby-method-params-indent t)
+             (not (smie-rule-parent-p "def" "def=")))
+         (save-excursion
+           (skip-chars-forward " \t")
+           (cons 'column (current-column))))
+        (t (smie-rule-parent (or ruby-method-params-indent 0)))))
+      ('(:before . "do")
+       (if ruby-block-indent
+           (ruby-smie--indent-to-stmt)
+         (cons 'column (current-indentation))))
+      ('(:before . ".")
+       (if (smie-rule-sibling-p)
+           (when ruby-align-chained-calls
+             (while
+                 (let ((pos (point))
+                       (parent (smie-backward-sexp ".")))
+                   (if (not (equal (nth 2 parent) "."))
+                       (progn (goto-char pos) nil)
+                     (goto-char (nth 1 parent))
+                     (not (smie-rule-bolp)))))
+             (cons 'column (current-column)))
+         (smie-backward-sexp ".")
+         (if ruby-method-call-indent
+             (cons 'column (+ (current-column)
+                              ruby-indent-level))
+           (ruby-smie--indent-to-stmt ruby-indent-level))))
+      (`(:before . ,(or "else" "then" "elsif" "rescue" "ensure"))
+       (smie-rule-parent))
+      (`(:before . ,(or "when" "in"))
+       ;; Align to the previous `when', but look up the virtual
+       ;; indentation of `case'.
+       (if (smie-rule-sibling-p) 0 (smie-rule-parent)))
+      (`(:after . ,(or "=" "+" "-" "*" "/" "&&" "||" "%" "**" "^" "&"
+                       "<=>" ">" "<" ">=" "<=" "==" "===" "!=" "<<" ">>"
+                       "+=" "-=" "*=" "/=" "%=" "**=" "&=" "|=" "^=" "|"
+                       "<<=" ">>=" "&&=" "||=" "and" "or"))
+       (cond
+        ((not ruby-after-operator-indent)
+         (ruby-smie--indent-to-stmt (if (smie-indent--hanging-p)
+                                        ruby-indent-level
+                                      0)))
+        ((and (smie-rule-parent-p ";" nil)
+              (smie-indent--hanging-p))
+         ruby-indent-level)))
+      (`(:before . "=")
+       (or
+        (save-excursion
+          (and (smie-rule-parent-p " @ ")
+               (goto-char (nth 1 (smie-indent--parent)))
+               (smie-rule-prev-p "def=")
+               (cons 'column (+ (current-column) ruby-indent-level -3))))
+        (and (smie-rule-parent-p ",")
+             (smie-rule-parent))))
+      (`(:after . ,(or "?" ":"))
+       (if ruby-after-operator-indent
+           ruby-indent-level
+         (ruby-smie--indent-to-stmt ruby-indent-level)))
+      (`(:before . ,(guard (memq (intern-soft token) ruby-alignable-keywords)))
+       (when (not (ruby--at-indentation-p))
+         (if (ruby-smie--indent-to-stmt-p token)
+             (ruby-smie--indent-to-stmt)
+           (cons 'column (current-column)))))
+      ('(:before . "iuwu-mod")
+       (smie-rule-parent ruby-indent-level))
+      (`(:before . ",")
+       (and (not ruby-parenless-call-arguments-indent)
+            (smie-rule-parent-p " @ ")
+            (ruby-smie--indent-to-stmt ruby-indent-level))))))
 #+end_src
 
 ** Yaml
@@ -1706,6 +1874,18 @@ Two space indentation by default.
 
   (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-topleft-v1)
   (setq magit-bury-buffer-function 'magit-restore-window-configuration)
+  (define-key magit-file-section-map [remap magit-diff-visit-file] #'magit-diff-visit-worktree-file)
+  (define-key magit-hunk-section-map [remap magit-diff-visit-file] #'magit-diff-visit-worktree-file)
+
+  ;; Refined (word-level) diffs everywhere, not just the hunk under point.
+  ;; The whole-line backgrounds are left to the active theme; we only override
+  ;; the within-line refinement overlays so the actually-changed characters
+  ;; stand out.
+  (setq magit-diff-refine-hunk 'all)
+
+  (custom-set-faces
+   '(diff-refine-added   ((t (:background "#7fcf7f" :foreground "#0a2a0a" :weight bold))))
+   '(diff-refine-removed ((t (:background "#f08a8a" :foreground "#330808" :weight bold)))))
 
   ;; (add-to-list 'savehist-additional-variables 'git-commit-previous-message)
 
@@ -1876,6 +2056,14 @@ Install latest version of transient, as the version included in Emacs is not rec
 
 #+begin_src emacs-lisp
 (use-package haml-mode
+  :preface
+  (defun c/haml-correct-comment-variables ()
+    "Correct an issue with uncomment when using evil-nerd-commenter"
+    (setq-local comment-start "-# ")
+    (setq-local comment-start-skip "-#+ *"))
+
+  :hook (haml-mode. c/haml-correct-comment-variables)
+
   :commands (haml-mode))
 #+end_src
 
@@ -1984,6 +2172,252 @@ Install latest version of transient, as the version included in Emacs is not rec
 (use-package message-db
   :ensure (message-db :host github :repo "gringocl/message-db.el"))
 #+end_src
+* Template Markup Mode
+
+A major mode for editing template-markup and docx-markup files used in the
+Neuron ~template-markup~ and ~docx-markup~ libraries. Both languages share the
+same ={tag:}= / ={:tag}= envelope, so a single mode handles both.
+
+The mode highlights:
+
+- Template-markup control-flow tags (~if~, ~each~, ~delimited-list~,
+  ~enumerated-list~, ~render~, ~insert~, …) and their close tags.
+- Docx-markup formatting tags — character styles (~bold~, ~italic~, …),
+  paragraph/section styles, tables, breaks, hyperlinks, bookmarks, and the
+  RSPA / indemnification-agreement section tags.
+- Delimiter schemes (~comma-and~, ~semicolon-or~, …) and enumerator schemes
+  (~letter~, ~roman~, ~number~, …).
+- Named parameters (~as=~, ~url=~, ~columns=~, …), variable references with
+  optional dotted access and predicate ~?~ suffixes, and quoted strings.
+- Escape sequences per the grammar (~\{~, ~\}~, ~\\~, ~\<any-char>~).
+- Invisible characters that frequently sneak in via copy/paste from Word —
+  literal U+00A0 NON-BREAKING SPACE and U+200B ZERO-WIDTH SPACE — are shown
+  with a high-contrast face so they are visually distinct from regular spaces.
+
+** Faces
+
+#+begin_src emacs-lisp
+(defface template-markup-invisible-character-face
+  '((((background dark))  :background "#552222" :foreground "#ffaaaa" :weight bold)
+    (t                    :background "#ffd0d0" :foreground "#aa0000" :weight bold))
+  "Face for highlighting invisible characters (NBSP, ZWSP) in template/docx markup."
+  :group 'template-markup)
+
+(defface template-markup-escape-face
+  '((t :inherit font-lock-warning-face))
+  "Face for escape sequences (e.g. \\{ \\} \\\\) in template/docx markup."
+  :group 'template-markup)
+
+(defface template-markup-tag-bracket-face
+  '((t :inherit font-lock-bracket-face))
+  "Face for the {, }, and {: tag delimiters in template/docx markup."
+  :group 'template-markup)
+#+end_src
+
+** Keyword tables
+
+#+begin_src emacs-lisp
+(defvar template-markup-control-flow-keywords
+  '("if" "if-not" "else" "else-if" "else-if-not"
+    "each" "insert" "render"
+    "delimited-list" "delimiter"
+    "enumerated-list" "enumerator"
+    "no-leading-space")
+  "Template-markup control-flow tag names (the original `template-markup' gem).")
+
+(defvar template-markup-docx-tags
+  '(;; Character styles
+    "bold" "italic" "underline" "uppercase" "error"
+    "signature-field" "inline-signature-field" "signing-role" "party-name"
+    ;; Hyperlink and bookmark
+    "hyperlink" "bookmark" "bookmark-link" "bookmark-link-full" "bookmark-link-relative"
+    ;; Spacing and special characters
+    "tab" "line-break" "column-break" "page-break" "section-break"
+    "white-space" "non-breaking-space" "non-breaking-hyphen"
+    ;; Tables
+    "table" "table-row" "table-row-header" "table-cell"
+    ;; Paragraphs and section styles
+    "p" "heading-1" "center" "signature" "date-signature"
+    "signature-block" "signature-block-signature"
+    "signature-page-preamble" "signature-page-footer"
+    "prescribed-legend" "footer"
+    ;; RSPA section tags
+    "rspa-section" "rspa-subsection" "rspa-subsubsection"
+    "rspa-signature-block" "rspa-signature-block-signature"
+    "rspa-conspicuous" "rspa-conspicuous-small"
+    "rspa-exhibit" "rspa-exhibit-indent" "rspa-exhibit-title"
+    "rspa-page-number" "rspa-section-title-page"
+    ;; Indemnification-agreement section tags
+    "indemnification-agreement-section-level-1"
+    "indemnification-agreement-section-level-2"
+    "indemnification-agreement-section-level-3"
+    "indemnification-agreement-section-level-4"
+    "indemnification-agreement-recital"
+    "indemnification-agreement-page-number"
+    "indemnification-agreement-section-title-page"
+    ;; Generic exhibit
+    "exhibit-title")
+  "Docx-markup tag names.")
+
+(defvar template-markup-all-tag-names
+  (append template-markup-control-flow-keywords
+          template-markup-docx-tags)
+  "All known tag names across template-markup and docx-markup.")
+
+(defvar template-markup-delimiter-schemes
+  '("comma" "comma-and" "comma-or"
+    "semicolon" "semicolon-and" "semicolon-or")
+  "Delimiter schemes for {delimited-list:} / {enumerated-list: delimiter-scheme=}.")
+
+(defvar template-markup-enumerator-schemes
+  '("letter" "letter-uppercase" "letter-x" "number" "roman")
+  "Enumerator schemes for {enumerated-list:}.")
+#+end_src
+
+** Syntax table and font-lock keywords
+
+#+begin_src emacs-lisp
+(defvar template-markup-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    (modify-syntax-entry ?_  "w"  table) ; underscore is a word constituent
+    (modify-syntax-entry ?-  "w"  table) ; hyphen is a word constituent (tags use it)
+    (modify-syntax-entry ?.  "."  table)
+    (modify-syntax-entry ?\" "\"" table)
+    (modify-syntax-entry ?\\ "\\" table)
+    table)
+  "Syntax table for `template-markup-mode'.")
+
+(defvar template-markup-font-lock-keywords
+  (let* ((all-tags-rx           (regexp-opt template-markup-all-tag-names t))
+         (control-flow-rx       (regexp-opt template-markup-control-flow-keywords t))
+         (delimiter-schemes-rx  (regexp-opt template-markup-delimiter-schemes t))
+         (enumerator-schemes-rx (regexp-opt template-markup-enumerator-schemes t)))
+    `(;; Escape sequences: \{  \}  \\  \<any-char>  -- match these first so braces
+      ;; inside escapes don't get parsed as tag delimiters.
+      ("\\\\." 0 'template-markup-escape-face t)
+
+      ;; Invisible characters: NBSP (U+00A0), ZWSP (U+200B). High priority so they
+      ;; are visible no matter where they appear.
+      ("[ ​]" 0 'template-markup-invisible-character-face t)
+
+      ;; Close tag: {:tagname}
+      (,(concat "\\({:\\)" all-tags-rx "\\(}\\)")
+       (1 'template-markup-tag-bracket-face)
+       (2 font-lock-keyword-face)
+       (3 'template-markup-tag-bracket-face))
+
+      ;; Close tag with unknown tag name: {:something}  -- still highlight the brackets
+      ("\\({:\\)\\([a-z][a-z0-9-]*\\)\\(}\\)"
+       (1 'template-markup-tag-bracket-face)
+       (2 font-lock-warning-face)
+       (3 'template-markup-tag-bracket-face))
+
+      ;; Opening tag with parameters: {tagname:  or  {tagname<space>...}
+      (,(concat "\\({\\)" all-tags-rx "\\(?::\\|[ }]\\)")
+       (1 'template-markup-tag-bracket-face)
+       (2 font-lock-keyword-face))
+
+      ;; Opening tag with unknown tag name: {something:  or  {something<space>...}
+      ("\\({\\)\\([a-z][a-z0-9-]*\\)\\(?::\\|[ }]\\)"
+       (1 'template-markup-tag-bracket-face)
+       (2 font-lock-warning-face))
+
+      ;; Delimiter scheme symbol immediately after `delimited-list:' or
+      ;; `delimiter-scheme=' -- highlight as a type/enum.
+      (,(concat "\\(?:delimited-list:\\|delimiter-scheme=\\)\\s-*"
+                delimiter-schemes-rx "\\b")
+       (1 font-lock-type-face))
+
+      ;; Enumerator scheme symbol immediately after `enumerated-list:'
+      (,(concat "enumerated-list:\\s-*" enumerator-schemes-rx "\\b")
+       (1 font-lock-type-face))
+
+      ;; Named parameters: key=value (key only)
+      ("\\b\\([a-z][a-z0-9-]*\\)=" (1 font-lock-variable-name-face))
+
+      ;; Variable references inside control-flow tags: {if: some.var?}, {each: xs as=...}
+      (,(concat "{" control-flow-rx ":\\s-*\\([a-z][a-z0-9_]*\\(?:\\.[a-z][a-z0-9_]*\\)*\\??\\)")
+       (2 font-lock-variable-name-face))
+
+      ;; Predicate variables (ending in ?)
+      ("\\b\\([a-z_][a-z0-9_]*\\?\\)" (1 font-lock-constant-face))
+
+      ;; Quoted strings
+      ("\"[^\"]*\"" . font-lock-string-face)
+
+      ;; Numbers in tag parameters
+      ("\\b\\(-?[0-9]+\\(?:\\.[0-9]+\\)?\\)\\b" (1 font-lock-constant-face))
+
+      ;; Stray braces (shouldn't usually match, but ensures any leftover { or } gets
+      ;; the bracket face).
+      ("[{}]" 0 'template-markup-tag-bracket-face)))
+  "Font lock keywords for `template-markup-mode'.")
+#+end_src
+
+** Indentation
+
+#+begin_src emacs-lisp
+(defun template-markup-indent-line ()
+  "Indent current line for template markup."
+  (interactive)
+  (let ((indent 0)
+        (pos (- (point-max) (point))))
+    (save-excursion
+      (beginning-of-line)
+      (when (not (bobp))
+        (forward-line -1)
+        (setq indent (current-indentation))
+        (when (and (looking-at ".*{\\(if\\|if-not\\|each\\|delimited-list\\|enumerated-list\\):")
+                   (not (looking-at ".*{:[a-z-]+}")))
+          (setq indent (+ indent 2)))
+        (forward-line 1)
+        (when (looking-at "\\s-*{:")
+          (setq indent (max 0 (- indent 2))))))
+    (indent-line-to indent)
+    (when (> (- (point-max) pos) (point))
+      (goto-char (- (point-max) pos)))))
+#+end_src
+
+** Mode definition and auto-mode
+
+#+begin_src emacs-lisp
+(define-derived-mode template-markup-mode prog-mode "Template-Markup"
+  "Major mode for editing Neuron template-markup and docx-markup files."
+  :syntax-table template-markup-mode-syntax-table
+  (setq-local comment-start nil)
+  (setq-local comment-end nil)
+  (setq-local font-lock-defaults '(template-markup-font-lock-keywords nil nil))
+  (setq-local indent-line-function #'template-markup-indent-line)
+  ;; Long paragraphs of prose are normal here -- wrap at the window edge.
+  (visual-line-mode 1))
+
+(add-to-list 'auto-mode-alist '("\\.tmpl\\'"     . template-markup-mode))
+(add-to-list 'auto-mode-alist '("\\.template\\'" . template-markup-mode))
+#+end_src
+
+** Content-based detection for .txt files
+
+The fixtures and proof templates in ~template-markup~ and ~docx-markup~ live in
+plain ~.txt~ files. Sniff the first ~4 KiB for a markup tag before falling
+through to ~text-mode~.
+
+#+begin_src emacs-lisp
+(defun template-markup-buffer-looks-like-markup-p ()
+  "Return non-nil if the current buffer's prefix contains a template/docx-markup tag.
+Used as the predicate side of a `magic-mode-alist' entry, so the test runs
+against the buffer that's about to be visited."
+  (let* ((tag-name-rx (regexp-opt template-markup-all-tag-names t))
+         (probe (concat "{" tag-name-rx "[}: ]")))
+    (save-excursion
+      (save-restriction
+        (widen)
+        (goto-char (point-min))
+        (re-search-forward probe (min (point-max) 4096) t)))))
+
+(add-to-list 'magic-mode-alist
+             '(template-markup-buffer-looks-like-markup-p . template-markup-mode))
+#+end_src
+
 * Startup Time
 
 #+begin_src emacs-lisp

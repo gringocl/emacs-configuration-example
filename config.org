@@ -1992,11 +1992,14 @@ Install latest version of transient, as the version included in Emacs is not rec
   :config
   (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
 
-  (setq org-default-notes-file "~/code/personal/emacs-configuration-example/notes.org")
+  (setq org-default-notes-file "~/.emacs.d/notes.org")
 
   (setq org-capture-templates
-        '(("c" "Config To Do" entry (file+headline "~/code/personal/emacs-configuration-example/notes.org" "To Dos")
-           "* TODO %?\n  %i\n  %a")))
+        '(("c" "Config To Do" entry (file+headline "~/.emacs.d/notes.org" "To Dos")
+           "* TODO %?\n  %i\n  %a")
+          ("C" "Config To Do + ask Claude" entry (file+headline "~/.emacs.d/notes.org" "To Dos")
+           "* TODO %?\n  %i\n  %a"
+           :c/ask-claude t)))
 
   (setq org-edit-src-content-indentation 0
         org-hide-emphasis-markers t)
@@ -2005,8 +2008,138 @@ Install latest version of transient, as the version included in Emacs is not rec
     (interactive)
     (org-capture nil "c"))
 
-  (leader-key-set "c" #'c/capture-config-todo))
+  (defun c/capture-config-todo-and-ask ()
+    "Capture a config TODO and dispatch a background Claude session to research it."
+    (interactive)
+    (org-capture nil "C"))
 
+  (leader-key-set "c" #'c/capture-config-todo)
+  (leader-key-set "C" #'c/capture-config-todo-and-ask))
+#+end_src
+
+*** Claude Capture Dispatch
+
+~SPC C~ captures a config TODO and dispatches a background ~claude -p~
+session against the repo root. The session reads the note, analyzes the
+config, and writes its findings back under the captured headline as a
+~:CLAUDE:~ drawer. Plain ~SPC c~ still works for capture-only.
+
+Failures land in ~*claude-capture-log*~. The prompt asks for analysis +
+proposal (diff if small, bullets if needs discussion, "needs a real
+conversation" if open-ended). Multiple captures run concurrently.
+
+#+begin_src emacs-lisp
+(defvar c/claude-capture-prompt
+  "You are being invoked from an Emacs org-capture hook. The user just
+jotted down a note about something they want changed or investigated in
+their personal Emacs config at this repo's root.
+
+The note text is below, between BEGIN-NOTE and END-NOTE.
+
+Your job:
+1. Read the relevant parts of the config (config.org is the source of
+   truth; init.el and early-init.el are also hand-written).
+2. Decide whether the note describes (a) a small, self-contained change
+   you can propose as a unified diff, (b) a research/analysis question
+   that needs a written answer, or (c) something too large or too
+   subjective for a one-shot answer.
+3. Respond in this exact format, suitable for pasting into an org file:
+
+   *** Analysis
+   <one to three short paragraphs of your findings>
+
+   *** Proposal
+   <one of:>
+   - A unified diff in a ~#+begin_src diff~ block IF the change is small
+     and you are confident.
+   - A short bulleted list of next steps IF the change needs discussion.
+   - The phrase \"Needs a real conversation.\" IF the question is open-ended.
+
+Do NOT edit any files. Do NOT run commands beyond reading. Keep total
+output under 400 words. The user will read this when they're ready and
+apply it themselves.
+
+BEGIN-NOTE
+%s
+END-NOTE"
+  "Prompt template passed to `claude -p' for capture-and-ask notes.
+%s is replaced with the captured note text.")
+
+(defun c/claude-capture--dispatch (note-text marker)
+  "Run `claude -p' against NOTE-TEXT and insert the result at MARKER on completion."
+  (let* ((prompt (format c/claude-capture-prompt note-text))
+         (log-buf (get-buffer-create "*claude-capture-log*"))
+         (output-buf (generate-new-buffer " *claude-capture-output*"))
+         (default-directory (expand-file-name "~/.emacs.d/"))
+         (proc (make-process
+                :name "claude-capture"
+                :buffer output-buf
+                :command (list (or (executable-find "claude") "claude")
+                               "-p" prompt)
+                :stderr log-buf
+                :noquery t
+                :sentinel
+                (lambda (process event)
+                  (when (memq (process-status process) '(exit signal))
+                    (let ((output (with-current-buffer (process-buffer process)
+                                    (buffer-string)))
+                          (exit-code (process-exit-status process)))
+                      (kill-buffer (process-buffer process))
+                      (if (zerop exit-code)
+                          (c/claude-capture--insert-result marker output)
+                        (with-current-buffer log-buf
+                          (goto-char (point-max))
+                          (insert (format "\n[%s] claude exited %d for note: %s\n"
+                                          (format-time-string "%FT%T")
+                                          exit-code
+                                          (truncate-string-to-width note-text 80))))
+                        (message "Claude capture failed (exit %d). See *claude-capture-log*."
+                                 exit-code))
+                      (set-marker marker nil)))))))
+    (message "Claude is thinking about: %s"
+             (truncate-string-to-width note-text 60 nil nil "..."))
+    proc))
+
+(defun c/claude-capture--insert-result (marker output)
+  "Insert OUTPUT under the captured headline at MARKER."
+  (when (and (markerp marker) (marker-buffer marker))
+    (with-current-buffer (marker-buffer marker)
+      (save-excursion
+        (goto-char marker)
+        (org-back-to-heading t)
+        (org-end-of-subtree t t)
+        (unless (bolp) (insert "\n"))
+        (insert "\n:CLAUDE:\n")
+        (insert (string-trim output))
+        (insert "\n:END:\n")
+        (save-buffer))
+      (message "Claude finished. Result inserted into notes.org."))))
+
+(defun c/claude-capture-after-finalize ()
+  "Org-capture hook: if the just-finalized capture had :c/ask-claude, dispatch Claude."
+  (when (and (not org-note-abort)
+             (plist-get org-capture-plist :c/ask-claude))
+    (let* ((entry-marker (org-capture-get :insertion-point))
+           (note-text
+            (when (and entry-marker (marker-buffer entry-marker))
+              (with-current-buffer (marker-buffer entry-marker)
+                (save-excursion
+                  (goto-char entry-marker)
+                  (org-back-to-heading t)
+                  (let ((start (point))
+                        (end (progn (org-end-of-subtree t t) (point))))
+                    (buffer-substring-no-properties start end)))))))
+      (when (and note-text (> (length (string-trim note-text)) 0))
+        (c/claude-capture--dispatch
+         note-text
+         (copy-marker entry-marker))))))
+
+(add-hook 'org-capture-after-finalize-hook #'c/claude-capture-after-finalize)
+#+end_src
+
+*** Org Superstar / Appear
+
+#+begin_src emacs-lisp
 (use-package org-superstar
   :hook (org-mode . org-superstar-mode)
   :config

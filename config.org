@@ -149,6 +149,25 @@ If FORCE-P, delete without confirmation."
     (consult-ripgrep t))
 #+end_src
 
+** `c/slugify-title`
+
+#+begin_src emacs-lisp
+(defun c/slugify-title (title)
+  "Slugify TITLE into kebab-case suitable for a filename and copy to the kill ring.
+Lowercases, replaces runs of non-alphanumeric characters with a single dash,
+and trims leading/trailing dashes. The current kill is offered as the default."
+  (interactive
+   (list (read-string "Title: " (and kill-ring (current-kill 0 t)))))
+  (let* ((downcased (downcase title))
+         (dashed (replace-regexp-in-string "[^[:alnum:]]+" "-" downcased))
+         (slug (replace-regexp-in-string "\\(^-+\\|-+$\\)" "" dashed)))
+    (when (string-empty-p slug)
+      (user-error "Title produced an empty slug"))
+    (kill-new slug)
+    (message "Copied slug: %s" slug)
+    slug))
+#+end_src
+
 * Initial Packages
 ** GCMH
 

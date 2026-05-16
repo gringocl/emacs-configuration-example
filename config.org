@@ -1931,6 +1931,16 @@ Install latest version of transient, as the version included in Emacs is not rec
   :init
   (setq browse-at-remote-add-line-number-if-no-region-selected nil)
   :config
+  (defun c/browse-at-remote--github-plain-for-markdown (orig repo-url location filename &optional linestart lineend)
+    "Append ?plain=1 to GitHub markdown URLs when a line is targeted, so the source view is shown instead of the rendered preview."
+    (let ((url (funcall orig repo-url location filename linestart lineend)))
+      (if (and linestart
+               (string-match-p "\\.\\(md\\|markdown\\)\\'" filename)
+               (string-match "\\`\\(.*?\\)\\(#L[0-9]+\\(?:-L[0-9]+\\)?\\)\\'" url))
+          (concat (match-string 1 url) "?plain=1" (match-string 2 url))
+        url)))
+  (advice-add 'browse-at-remote--format-region-url-as-github
+              :around #'c/browse-at-remote--github-plain-for-markdown)
   (leader-key-set "g y" 'browse-at-remote-kill))
 #+end_src
 

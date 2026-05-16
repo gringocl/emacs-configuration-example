@@ -200,7 +200,7 @@ and trims leading/trailing dashes. The current kill is offered as the default."
   (leader-key-declare-prefix "p" "projects" "Projects")
   (leader-key-declare-prefix "q" "quit" "Quit Emacs")
   (leader-key-declare-prefix "r" "error" "Error")
-  (leader-key-declare-prefix "S" "flyspell" "Flyspell")
+  (leader-key-declare-prefix "S" "spell" "Spell")
   (leader-key-declare-prefix "s" "search" "Search")
   (leader-key-declare-prefix "t" "toggle" "Toggle")
   (leader-key-declare-prefix "u" "C-u" "Universal Argument")
@@ -1488,25 +1488,23 @@ If FETCHER is a function, ELT is used as the key in LIST (an alist)."
 #+end_src
 
 ** Spell Checking
-*** Flyspell
+
+Jinx provides camelCase-aware spell checking via libenchant. Identifiers
+like ~postalCode~ are split into ~postal~ + ~Code~ and each fragment is
+checked separately, so the whole token only flags when a real fragment is
+misspelled. ~jinx-languages~ holds both English and Spanish dictionaries;
+a word passes if either accepts it.
+
+Prereq: ~brew install enchant~ (uses the existing aspell dictionaries as
+backend).
 
 #+begin_src emacs-lisp
-(use-feature flyspell
-  :hook (((org-mode git-commit-mode markdown-mode) . flyspell-mode)
-         (prog-mode . flyspell-prog-mode))
+(use-package jinx
+  :hook ((org-mode git-commit-mode markdown-mode prog-mode) . jinx-mode)
+  :bind (([remap ispell-word] . jinx-correct)
+         ("C-M-$" . jinx-languages))
   :config
-  (setq flyspell-issue-message-flag nil
-        flyspell-issue-welcome-flag nil))
-#+end_src
-
-*** Flyspell correct
-
-#+begin_src emacs-lisp
-(use-package flyspell-correct
-   :commands flyspell-correct-previous
-   :bind ([remap ispell-word] . #'flyspell-correct-at-point)
-   :config
-   (setq flyspell-popup-correct-delay 0.8))
+  (setq jinx-languages "en_US es"))
 #+end_src
 
 ** Editing Search Results (wgrep)
